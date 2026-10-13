@@ -12,22 +12,13 @@ Projeto Java 21 / Spring Boot 3.3.4, baseado no código enviado. Abrange os 15 e
 4. Configure as variáveis abaixo no terminal ou em **Run > Edit Configurations > Environment variables**.
 5. Execute `mvn spring-boot:run` ou a classe `CatalogoApplication`. A porta padrão é **8083**.
 
-Exemplo PowerShell; substitua os valores entre `<...>` pelos dados da sua equipe:
 
 ```powershell
 $env:DB_URL = 'jdbc:postgresql://localhost:5432/integrador'
-$env:DB_USER = 'own_produtos'
-$env:DB_PASSWORD = '<senha-do-banco>'
-$env:JWT_ISSUER = '<emissor-exato-dos-tokens>'
-$env:JWT_JWKS_URI = '<url-das-chaves-publicas-JWKS>'
-$env:JWT_AUDIENCE = '<audiencia-definida-pelo-grupo-de-autenticacao>'
-$env:JWT_PERMISSIONS_CLAIM = 'permissions'
+$env:DB_USER = 'postgres'
+$env:DB_PASSWORD = '1234'
 mvn spring-boot:run
 ```
-
-`JWT_PERMISSIONS_CLAIM` é configurável porque o PDF não define o nome desse claim. O padrão `permissions` espera uma lista de strings, por exemplo `['produtos.item.criar']` (no JSON real, use aspas duplas), ou uma string de permissões separadas por espaços. Confirme o nome e o formato com o grupo de autenticação. Não há usuário/senha local nem modo de produção que dispense JWT.
-
-O serviço verifica assinatura RS256, emissor, audiência, expiração e identidade. Usuários usam `sub` como autor e `tenant_id` como tenant; o header `X-Tenant-Id` é ignorado para usuários. Tokens com `sub` iniciado por `svc:` exigem `clientId` e o header `X-Tenant-Id`; `clientId` é o autor auditado. As permissões são independentes.
 
 ## Endpoints
 
