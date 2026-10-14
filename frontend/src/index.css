@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* Paleta Centinela — alterar aqui muda o sistema inteiro */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-950: #0C1A2E;
+  --color-brand-900: #0F2340;
+  --color-brand-800: #0B6B4E;
+  --color-brand-700: #0D9B6E;
+  --color-brand-600: #10B981;
+  --color-brand-500: #22C55E;
+  --color-brand-400: #4ADE80;
+  --color-brand-300: #86EFAC;
+  --color-brand-200: #BBF7D0;
+  --color-brand-100: #DCFCE7;
+  --color-brand-50:  #F0FDF4;
+}
+
+html, body, #root { height: 100%; }
+body { @apply bg-gray-50 text-gray-800 antialiased font-sans; }
+
+@keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes pop-in { from { opacity: 0; transform: translateY(6px) scale(.98) } to { opacity: 1; transform: none } }
+.animate-fade-in { animation: fade-in .15s ease-out }
+.animate-pop-in { animation: pop-in .18s ease-out }

@@ -1,0 +1,51 @@
+# Ambiente Docker do catálogo de produtos.
+#   Só o banco (desenvolvimento):   docker compose up -d
+#   Banco + API (como em produção): docker compose --profile app up -d --build
+# Copie .env.example para .env antes de subir a API.
+name: centinela-produtos
+
+services:
+  db:
+    image: postgres:16-alpine   # Flyway 10.10 suporta oficialmente até o PostgreSQL 16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: integrador
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      APP_DB_USER: ${DB_USER:-own_produtos}
+      APP_DB_PASSWORD: ${DB_PASSWORD:-produtos}
+      TZ: America/Sao_Paulo
+    ports:
+      # 5432 já é usada pelo PostgreSQL instalado no Windows.
+      - "${DB_HOST_PORT:-5434}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d integrador"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    profiles: ["app"]
+    build: .
+    image: centinela/produtos-api:local
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/integrador
+      DB_USER: ${DB_USER:-own_produtos}
+      DB_PASSWORD: ${DB_PASSWORD:-produtos}
+      JWT_ISSUER: ${JWT_ISSUER:-}
+      JWT_JWKS_URI: ${JWT_JWKS_URI:-}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-}
+      JWT_PERMISSIONS_CLAIM: ${JWT_PERMISSIONS_CLAIM:-permissions}
+      JAVA_OPTS: ${JAVA_OPTS:--XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError}
+    ports:
+      - "${API_HOST_PORT:-8083}:8083"
+
+volumes:
+  pgdata:
