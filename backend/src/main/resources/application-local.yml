@@ -1,0 +1,12 @@
+# Ativar explicitamente: mvn spring-boot:run -Dspring-boot.run.profiles=local
+# Usa o PostgreSQL configurado por DB_URL/DB_USER/DB_PASSWORD.
+server:
+  address: 127.0.0.1
+  forward-headers-strategy: none
+produtos:
+  jwt:
+    issuer: http://catalogo.local
+    audience: produtos-local
+    permissions-claim: permissions
+    # Não é consultado neste perfil: a chave pública é gerada em memória.
+    jwk-set-uri: ''

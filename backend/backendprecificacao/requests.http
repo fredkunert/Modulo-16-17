@@ -1,0 +1,94 @@
+### Backend 2 — testes manuais da API de precificação (profile "local")
+###
+### Antes: suba o Postgres (docker compose up -d db), rode o catálogo (porta 8083) e este
+### serviço (porta 8084), ambos com o profile local. Ver README.md desta pasta.
+### Este serviço, no profile local, aceita qualquer requisição como tenant "tenant-local"
+### (o mesmo tenant do token local do catálogo). O token só é necessário no catálogo.
+
+@catalogo = http://localhost:8083/api/produtos
+@precificacao = http://localhost:8084/api/produtos
+
+### 0.1) Token local do catálogo (só vale para a porta 8083)
+POST {{catalogo}}/dev/token
+
+> {% client.global.set("token", response.body.data.accessToken); %}
+
+### 0.2) Criar um item no catálogo — o id volta na resposta e fica guardado em {{itemId}}
+POST {{catalogo}}/itens
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"sku":"PRC-{{$random.integer(1000, 9999)}}","nome":"Item para precificar","categoria":"SOFTWARE","unidade":"UNIDADE","periodicidade":"UNICA","quantidadeMinima":"1.0000"}
+
+> {% client.global.set("itemId", response.body.data.id); %}
+
+### 1) Salvar (criar) a precificação do item
+PUT {{precificacao}}/itens/{{itemId}}/precificacao
+Content-Type: application/json
+
+{
+  "moeda": "BRL",
+  "custo": 100.00,
+  "preco": 150.00,
+  "margemPercentual": 20.00,
+  "markupValor": 10.00,
+  "markupTipo": "PERCENTUAL",
+  "impostosValor": 8.00,
+  "impostosTipo": "PERCENTUAL",
+  "comissaoValor": 5.00,
+  "comissaoTipo": "PERCENTUAL"
+}
+
+### 2) Consultar a precificação vigente
+GET {{precificacao}}/itens/{{itemId}}/precificacao
+
+### 3) O catálogo enxerga o preço gravado aqui (precoVenda = 150.00)
+GET {{catalogo}}/itens/{{itemId}}
+Authorization: Bearer {{token}}
+
+### 4) Alterar só o custo — preço, margem etc. continuam iguais na resposta
+PUT {{precificacao}}/itens/{{itemId}}/precificacao
+Content-Type: application/json
+
+{
+  "moeda": "BRL",
+  "custo": 120.00,
+  "preco": 150.00,
+  "margemPercentual": 20.00,
+  "markupValor": 10.00,
+  "markupTipo": "PERCENTUAL",
+  "impostosValor": 8.00,
+  "impostosTipo": "PERCENTUAL",
+  "comissaoValor": 5.00,
+  "comissaoTipo": "PERCENTUAL"
+}
+
+### 5) Histórico (paginado) — deve mostrar 1 alteração: campo "custo", 100.00 -> 120.00
+GET {{precificacao}}/itens/{{itemId}}/precificacao/historico?pagina=0&tamanho=20
+
+### 6) Moeda inválida — deve voltar 400 com o campo explicado
+PUT {{precificacao}}/itens/{{itemId}}/precificacao
+Content-Type: application/json
+
+{ "moeda": "reais", "custo": 100.00 }
+
+### 7) Item que não existe — deve voltar 404
+GET {{precificacao}}/itens/99999999-9999-9999-9999-999999999999/precificacao
+
+### 8) Casas decimais além da precisão da coluna — deve voltar 400
+PUT {{precificacao}}/itens/{{itemId}}/precificacao
+Content-Type: application/json
+
+{ "moeda": "BRL", "custo": 100.999 }
+
+### 9) Markup sem tipo — deve voltar 422 (valor e tipo andam juntos)
+PUT {{precificacao}}/itens/{{itemId}}/precificacao
+Content-Type: application/json
+
+{ "moeda": "BRL", "markupValor": 10.00 }
+
+### 10) Imposto MONETARIO com mais de 2 casas — deve voltar 422
+PUT {{precificacao}}/itens/{{itemId}}/precificacao
+Content-Type: application/json
+
+{ "moeda": "BRL", "impostosValor": 8.1234, "impostosTipo": "MONETARIO" }

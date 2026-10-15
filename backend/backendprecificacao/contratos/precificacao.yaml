@@ -1,0 +1,206 @@
+openapi: 3.0.3
+info:
+  title: Precificação (Backend 2 — Produtos e Serviços)
+  version: "0.3"
+  description: >
+    Registro manual e independente de custo, preço, margem, markup, impostos
+    e comissão de um item do catálogo, com histórico de alterações.
+    O servidor nunca recalcula ou valida consistência matemática entre os
+    campos (Especificação do Catálogo e da Precificação, v0.2, seção 5.1) —
+    só valida formato e precisão decimal.
+    Publicado separado do contrato do catálogo (produtos.yaml) para que
+    outros grupos — Contratos e Documentos, Financeiro — consigam consumir
+    só isto, sem depender do restante do módulo.
+
+    Duas permissões controlam o acesso:
+    - produtos.precificacao.ver — dá acesso ao endpoint, mas custo, margem,
+      markup e comissão vêm null se faltar a permissão abaixo. Preço e
+      impostos sempre aparecem.
+    - produtos.precificacao.ver_valores_sensiveis — extra, some junto com a
+      primeira, libera os campos de rentabilidade interna.
+    Ver PRECIFICACAO.md para a lista completa de campos considerados
+    sensíveis e a justificativa dessa divisão (é uma proposta do Backend 2,
+    pendente de confirmação com o time).
+servers:
+  - url: /api/produtos
+
+paths:
+  /itens/{itemId}/precificacao:
+    get:
+      summary: Consultar a precificação vigente de um item
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrecificacaoEnvelope' }
+        '401': { description: Sem token }
+        '403': { description: Sem permissão (produtos.precificacao.ver) }
+        '404': { description: Item não existe ou pertence a outro tenant }
+    put:
+      summary: Registrar os valores manuais da precificação vigente
+      description: >
+        Todo campo é independente. Enviar um campo como null apaga o valor
+        anterior — não é a mesma coisa que omitir o campo do corpo. Cada
+        campo alterado gera uma linha no histórico.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PrecificacaoRequest' }
+      responses:
+        '200':
+          description: Salvo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrecificacaoEnvelope' }
+        '400':
+          description: "Formato ou precisão inválidos (ex.: mais casas decimais do que a coluna aceita, tipo fora de PERCENTUAL/FATOR/MONETARIO)"
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroEnvelope' }
+        '401': { description: Sem token }
+        '403': { description: Sem permissão (produtos.precificacao.editar) }
+        '404': { description: Item não existe ou pertence a outro tenant }
+        '409':
+          description: >
+            Conflito de concorrência — outra edição do mesmo item foi salva
+            entre a leitura e a gravação desta requisição. O cliente deve
+            reconsultar o GET e tentar de novo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroEnvelope' }
+        '422':
+          description: >
+            Regra estrutural dos dados: valor e tipo de markup, impostos e comissão
+            precisam vir juntos (ou os dois em branco), e valor MONETARIO aceita no
+            máximo 2 casas decimais. O campo com problema vem em errors[].campo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroEnvelope' }
+
+  /itens/{itemId}/precificacao/historico:
+    get:
+      summary: Histórico de alterações da precificação, paginado
+      description: >
+        Autor, momento, valor anterior e novo de cada alteração. Linhas de
+        campos sensíveis (custo, margem, markup, comissão) aparecem com
+        valorAnterior/valorNovo = null pra quem não tem
+        produtos.precificacao.ver_valores_sensiveis.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: pagina, in: query, schema: { type: integer, default: 0 } }
+        - { name: tamanho, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      itens:
+                        type: array
+                        items: { $ref: '#/components/schemas/PrecificacaoHistoricoItem' }
+                      pagina: { type: integer }
+                      tamanho: { type: integer }
+                      total: { type: integer }
+        '404': { description: Item não existe ou pertence a outro tenant }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    PrecificacaoRequest:
+      type: object
+      description: Todo campo é opcional e independente; ausência/null nunca vira zero.
+      properties:
+        moeda: { type: string, example: BRL, pattern: "^[A-Z]{3}$" }
+        custo: { type: number, nullable: true, description: "até 2 casas decimais" }
+        preco: { type: number, nullable: true, description: "até 2 casas decimais" }
+        margemPercentual: { type: number, nullable: true, description: "percentual informado, não calculado; até 4 casas decimais" }
+        markupValor: { type: number, nullable: true, description: "até 4 casas decimais" }
+        markupTipo: { type: string, enum: [PERCENTUAL, FATOR], nullable: true }
+        impostosValor: { type: number, nullable: true, description: "até 4 casas decimais" }
+        impostosTipo: { type: string, enum: [PERCENTUAL, MONETARIO], nullable: true }
+        comissaoValor: { type: number, nullable: true, description: "até 4 casas decimais" }
+        comissaoTipo: { type: string, enum: [PERCENTUAL, MONETARIO], nullable: true }
+
+    Precificacao:
+      type: object
+      properties:
+        itemId: { type: string, format: uuid }
+        moeda: { type: string }
+        custo: { type: number, nullable: true }
+        preco: { type: number, nullable: true }
+        margemPercentual: { type: number, nullable: true }
+        markupValor: { type: number, nullable: true }
+        markupTipo: { type: string, nullable: true }
+        impostosValor: { type: number, nullable: true }
+        impostosTipo: { type: string, nullable: true }
+        comissaoValor: { type: number, nullable: true }
+        comissaoTipo: { type: string, nullable: true }
+        versao:
+          type: integer
+          description: usado internamente para o lock otimista (BE2-04); não precisa ser enviado pelo cliente.
+        updatedAt: { type: string, format: date-time }
+
+    PrecificacaoEnvelope:
+      type: object
+      properties:
+        success: { type: boolean }
+        data: { $ref: '#/components/schemas/Precificacao' }
+        message: { type: string, nullable: true }
+        errors: { type: array, items: { type: object } }
+
+    PrecificacaoHistoricoItem:
+      type: object
+      properties:
+        campoAlterado: { type: string, example: custo }
+        valorAnterior:
+          nullable: true
+          description: >
+            Número quando campoAlterado é custo/preco/margemPercentual/
+            markupValor/impostosValor/comissaoValor; texto quando é
+            markupTipo/impostosTipo/comissaoTipo/moeda.
+          oneOf:
+            - { type: number }
+            - { type: string }
+        valorNovo:
+          nullable: true
+          description: mesma regra de valorAnterior
+          oneOf:
+            - { type: number }
+            - { type: string }
+        alteradoPor: { type: string, format: uuid }
+        alteradoEm: { type: string, format: date-time }
+
+    ErroEnvelope:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        data: { nullable: true }
+        message: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              campo: { type: string, nullable: true }
+              codigo: { type: string }
+              detalhe: { type: string }

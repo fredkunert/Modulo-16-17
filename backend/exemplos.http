@@ -1,0 +1,54 @@
+@base = http://localhost:8083/api/produtos
+@token = substitua-pelo-token-da-equipe
+@itemId = substitua-pelo-uuid-do-item
+
+### Health público
+GET {{base}}/health
+
+### Criar fabricante
+POST {{base}}/fabricantes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"nome":"Fabricante de exemplo"}
+
+### Criar distribuidor
+POST {{base}}/distribuidores
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"nome":"Distribuidor de exemplo"}
+
+### Criar item
+POST {{base}}/itens
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"sku":"BKP-001","nome":"Licença de backup","categoria":"LICENÇA","unidade":"USUARIO","periodicidade":"MENSAL","quantidadeMinima":"1.0000"}
+
+### Listar
+GET {{base}}/itens?pagina=0&tamanho=20&ordenar=nome,asc
+Authorization: Bearer {{token}}
+
+### Detalhes
+GET {{base}}/itens/{{itemId}}
+Authorization: Bearer {{token}}
+
+### Inativar
+PATCH {{base}}/itens/{{itemId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{"ativo":false}
+
+### Resumo (também retorna inativos)
+GET {{base}}/itens/{{itemId}}/resumo
+Authorization: Bearer {{token}}
+
+### Lote
+GET {{base}}/itens/resumo?ids={{itemId}}
+Authorization: Bearer {{token}}
+
+### Busca global
+GET {{base}}/busca?q=backup
+Authorization: Bearer {{token}}
