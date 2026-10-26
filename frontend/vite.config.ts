@@ -14,7 +14,12 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       // O backend não habilita CORS: em desenvolvimento as chamadas passam pelo proxy do Vite.
       // No perfil "local" o Spring escuta só em 127.0.0.1, por isso o alvo não usa "localhost".
+      // A precificação é outro serviço (8084) com o mesmo prefixo /api/produtos — mesma divisão do gateway/nginx.conf.
+      // A ordem importa: a regra mais específica precisa vir antes de "/api".
       proxy: {
+        "^/api/produtos/itens/[^/]+/precificacao": {
+          target: env.PRECIFICACAO_URL || "http://127.0.0.1:8084", changeOrigin: false,
+        },
         "/api": { target: env.BACKEND_URL || "http://127.0.0.1:8083", changeOrigin: false },
       },
     },

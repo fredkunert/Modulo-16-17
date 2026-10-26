@@ -1,6 +1,9 @@
+# O backend de precificação tem a própria imagem (backendprecificacao/Dockerfile)
+backendprecificacao/
 target/
 .idea/
 *.iml
+.git
 .env
 .env.*
 rodar-local.ps1

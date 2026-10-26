@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.*;
@@ -62,6 +63,7 @@ public class AutenticacaoLocalConfig {
     SecurityFilterChain rotaTokenLocal(HttpSecurity http, ObjectMapper mapper) throws Exception {
         // Não confia em X-Forwarded-For: só aceita a conexão originada no próprio computador.
         http.securityMatcher(TOKEN_PATH)
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a

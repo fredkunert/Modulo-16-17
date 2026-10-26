@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api } from "@/lib/api";
+import { api, type TipoParceiro } from "@/lib/api";
 import type { Parceiro } from "@/types/produtos";
 
 /** Carrega fabricantes e distribuidores para selects e para exibir nomes a partir de IDs. */
@@ -29,4 +29,22 @@ export function useParceiros(habilitado: boolean) {
   }, [fabricantes, distribuidores]);
 
   return { fabricantes, distribuidores, porId: (id: string | null) => (id ? nomes.get(id) ?? null : null), erro, recarregar };
+}
+
+/**
+ * Parceiro de um ID específico: usa o já carregado em memória e, se não estiver lá
+ * (lista ainda carregando ou desatualizada), consulta GET /{tipo}/{id}.
+ */
+export function useParceiro(tipo: TipoParceiro, id: string | null, emCache: Parceiro | null) {
+  const [buscado, setBuscado] = useState<Parceiro | null>(null);
+
+  useEffect(() => {
+    setBuscado(null);
+    if (!id || emCache) return;
+    let ativo = true;
+    api.parceiros(tipo).buscar(id).then((p) => { if (ativo) setBuscado(p); }).catch(() => {});
+    return () => { ativo = false; };
+  }, [tipo, id, emCache]);
+
+  return emCache ?? (buscado?.id === id ? buscado : null);
 }

@@ -76,6 +76,43 @@ export interface BuscaResultado {
   rota: string;
 }
 
+// Contratos espelhados de backend/backendprecificacao/.../precificacao/dto
+
+export type MarkupTipo = "PERCENTUAL" | "FATOR";
+export type ValorTipo = "PERCENTUAL" | "MONETARIO";
+
+/** Todo campo é opcional e independente: null significa "não informado", nunca zero. */
+export interface PrecificacaoDados {
+  moeda: string | null;
+  custo: number | null;
+  preco: number | null;
+  margemPercentual: number | null;
+  markupValor: number | null;
+  markupTipo: MarkupTipo | null;
+  impostosValor: number | null;
+  impostosTipo: ValorTipo | null;
+  comissaoValor: number | null;
+  comissaoTipo: ValorTipo | null;
+}
+
+/**
+ * Sem precificação gravada, o GET devolve tudo null com versao 0 e updatedAt null.
+ * Sem produtos.precificacao.ver_valores_sensiveis, custo/margem/markup/comissão voltam null.
+ */
+export interface Precificacao extends PrecificacaoDados {
+  itemId: string;
+  versao: number;
+  updatedAt: string | null;
+}
+
+export interface PrecificacaoHistorico {
+  campoAlterado: keyof PrecificacaoDados;
+  valorAnterior: number | string | null;
+  valorNovo: number | string | null;
+  alteradoPor: string;
+  alteradoEm: string;
+}
+
 export interface Pagina<T> {
   itens: T[];
   pagina: number;

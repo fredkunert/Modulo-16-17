@@ -1,5 +1,6 @@
 import type {
-  BuscaResultado, Item, ItemAtualizacao, ItemCriacao, Pagina, Parceiro,
+  BuscaResultado, Item, ItemAtualizacao, ItemCriacao, Pagina, Parceiro, Precificacao, PrecificacaoDados,
+  PrecificacaoHistorico,
 } from "@/types/produtos";
 
 const BASE = `${import.meta.env.VITE_API_URL ?? ""}/api/produtos`;
@@ -35,7 +36,7 @@ async function request<T>(method: string, path: string, body?: unknown, tentouRe
   try {
     res = await fetch(`${BASE}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   } catch {
-    throw new ApiError(0, "Não foi possível conectar ao backend. Verifique se o serviço está em execução na porta 8083.");
+    throw new ApiError(0, "Não foi possível conectar ao backend. Verifique se os serviços estão em execução (catálogo na porta 8083, precificação na 8084).");
   }
 
   if (res.status === 401 && !tentouRenovar && renovarToken && (await renovarToken())) {
@@ -93,8 +94,18 @@ export const api = {
 
   busca: (q: string) => request<BuscaResultado[]>("GET", `/busca${qs({ q })}`),
 
+  /** Serviço de precificação (porta 8084); em dev, o proxy do Vite/gateway separa as rotas. */
+  precificacao: {
+    buscar: (itemId: string) => request<Precificacao>("GET", `/itens/${itemId}/precificacao`),
+    /** Substitui a precificação inteira: campo enviado como null fica vazio. */
+    salvar: (itemId: string, d: PrecificacaoDados) => request<Precificacao>("PUT", `/itens/${itemId}/precificacao`, d),
+    historico: (itemId: string, p: { pagina?: number; tamanho?: number }) =>
+      request<Pagina<PrecificacaoHistorico>>("GET", `/itens/${itemId}/precificacao/historico${qs({ ...p })}`),
+  },
+
   parceiros: (tipo: TipoParceiro) => ({
     listar: (p: PaginaParams) => request<Pagina<Parceiro>>("GET", `/${tipo}${qs({ ...p })}`),
+    buscar: (id: string) => request<Parceiro>("GET", `/${tipo}/${id}`),
     criar: (d: { nome: string; ativo: boolean }) => request<Parceiro>("POST", `/${tipo}`, d),
     atualizar: (id: string, d: Partial<{ nome: string; ativo: boolean }>) => request<Parceiro>("PATCH", `/${tipo}/${id}`, d),
   }),

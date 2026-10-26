@@ -209,6 +209,7 @@ export function ItensPage({ abrirItemId, onAberto }: { abrirItemId: string | nul
             podeEditar={podeEditar}
             onEdit={() => setForm({ open: true, item: detalhe })}
             onToggleAtivo={() => setConfirmar(detalhe)}
+            onPrecificacaoSalva={() => api.itens.buscar(detalhe.id).then(aplicarSalvo).catch(() => {})}
             onClose={() => setDetalhe(null)}
           />
         )}

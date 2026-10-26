@@ -1,7 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { api, ApiError, configurarAutenticacao } from "@/lib/api";
 
-export type Permissao = "produtos.item.criar" | "produtos.item.editar" | "produtos.item.ver" | "produtos.item.ver_resumo";
+export type Permissao =
+  | "produtos.item.criar" | "produtos.item.editar" | "produtos.item.ver" | "produtos.item.ver_resumo"
+  | "produtos.precificacao.ver" | "produtos.precificacao.editar" | "produtos.precificacao.ver_valores_sensiveis";
 export type PerfilLocal = "catalogo" | "resumo";
 
 export interface Sessao {

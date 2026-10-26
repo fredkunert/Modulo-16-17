@@ -3,11 +3,14 @@ import { Ban, BadgeDollarSign, Copy, Pencil, RotateCcw, X } from "lucide-react";
 import { Badge, Button, DetailField, DetailSection, statusBadge, useToast } from "@/components/ui";
 import { CATEGORIA_VARIANT, dataHora, moeda, percentual, quantidade } from "@/lib/format";
 import { PERIODICIDADE_LABEL, UNIDADE_LABEL, type Item, type Parceiro } from "@/types/produtos";
+import { useSession } from "@/lib/session";
+import { useParceiro } from "@/lib/useParceiros";
+import { PrecificacaoTab } from "./PrecificacaoTab";
 
 const TABS = ["Visão geral", "Precificação", "Registro"];
 
 export function ItemDetailPanel({
-  item, fabricante, distribuidor, podeEditar, onEdit, onToggleAtivo, onClose,
+  item, fabricante, distribuidor, podeEditar, onEdit, onToggleAtivo, onPrecificacaoSalva, onClose,
 }: {
   item: Item;
   fabricante: Parceiro | null;
@@ -15,10 +18,15 @@ export function ItemDetailPanel({
   podeEditar: boolean;
   onEdit: () => void;
   onToggleAtivo: () => void;
+  /** Chamado após salvar a precificação: o preço gravado também aparece no item do catálogo. */
+  onPrecificacaoSalva: () => void;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState(0);
   const toast = useToast();
+  const podeVerPrecificacao = useSession().can("produtos.precificacao.ver");
+  const fab = useParceiro("fabricantes", item.fabricanteId, fabricante);
+  const dist = useParceiro("distribuidores", item.distribuidorId, distribuidor);
   const semPreco = item.precoVenda === null && item.precoMinimo === null && item.descontoMaximo === null;
 
   const copiarId = async () => {
@@ -96,14 +104,16 @@ export function ItemDetailPanel({
               <DetailField label="Casas decimais aceitas" value={String(item.casasDecimaisQuantidade)} />
             </DetailSection>
             <DetailSection number={3} title="Parceiros">
-              <DetailField label="Fabricante" value={parceiro(fabricante, item.fabricanteId)} />
-              <DetailField label="Distribuidor" value={parceiro(distribuidor, item.distribuidorId)} />
+              <DetailField label="Fabricante" value={parceiro(fab, item.fabricanteId)} />
+              <DetailField label="Distribuidor" value={parceiro(dist, item.distribuidorId)} />
             </DetailSection>
           </>
         )}
 
         {tab === 1 && (
-          semPreco ? (
+          podeVerPrecificacao ? (
+            <PrecificacaoTab itemId={item.id} moedaItem={item.moeda} onSalvo={onPrecificacaoSalva} />
+          ) : semPreco ? (
             <div className="flex flex-col items-center text-center py-10">
               <div className="w-14 h-14 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mb-3">
                 <BadgeDollarSign className="w-7 h-7" />

@@ -1,0 +1,4 @@
+# Profile "local": autenticação falsa (DevAuthFilter) — só para desenvolvimento.
+# Escuta apenas no próprio computador, igual ao catálogo. NÃO usar em container/servidor.
+server:
+  address: 127.0.0.1

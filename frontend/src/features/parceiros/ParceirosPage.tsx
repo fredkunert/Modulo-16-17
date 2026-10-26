@@ -67,6 +67,18 @@ export function ParceirosPage({ cfg, onAbrirItem }: { cfg: ParceiroConfig; onAbr
     setDetalhe((d) => (d && d.id === s.id ? s : d));
   };
 
+  /** Abre com o dado da lista e confirma no servidor (GET /{tipo}/{id}), que pode ter mudado desde a listagem. */
+  function abrirDetalhe(p: Parceiro) {
+    setDetalhe(p);
+    api.parceiros(cfg.tipo).buscar(p.id).then(aplicarSalvo).catch((e) => {
+      if (e instanceof ApiError && e.status === 404) {
+        toast.error(`${Singular} não encontrado. A lista foi atualizada.`);
+        setDetalhe((d) => (d && d.id === p.id ? null : d));
+        carregar();
+      }
+    });
+  }
+
   async function alternarAtivo() {
     if (!confirmar) return;
     setAlternando(true);
@@ -152,7 +164,7 @@ export function ParceirosPage({ cfg, onAbrirItem }: { cfg: ParceiroConfig; onAbr
               </thead>
               <tbody>
                 {visiveis.map((p) => (
-                  <tr key={p.id} onClick={() => setDetalhe(p)} className={`border-b border-gray-100 last:border-0 cursor-pointer hover:bg-brand-50 transition-colors ${p.ativo ? "" : "opacity-60"}`}>
+                  <tr key={p.id} onClick={() => abrirDetalhe(p)} className={`border-b border-gray-100 last:border-0 cursor-pointer hover:bg-brand-50 transition-colors ${p.ativo ? "" : "opacity-60"}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar text={p.nome} />
@@ -180,7 +192,7 @@ export function ParceirosPage({ cfg, onAbrirItem }: { cfg: ParceiroConfig; onAbr
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             {visiveis.map((p) => (
-              <button key={p.id} onClick={() => setDetalhe(p)} className={`text-left bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand-200 transition-all p-4 ${p.ativo ? "" : "opacity-60"}`}>
+              <button key={p.id} onClick={() => abrirDetalhe(p)} className={`text-left bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand-200 transition-all p-4 ${p.ativo ? "" : "opacity-60"}`}>
                 <div className="flex items-start justify-between gap-2">
                   <Avatar text={p.nome} className="w-10 h-10 rounded-lg" />
                   {statusBadge(p.ativo ? "ativo" : "inativo")}

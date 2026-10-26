@@ -1,0 +1,75 @@
+# Ambiente de DESENVOLVIMENTO (não substitui o docker-compose da plataforma).
+#
+#   Só o banco (para rodar os serviços pelo IntelliJ/Maven):   docker compose -f docker-compose.dev.yml up -d db
+#   Banco + os dois serviços + gateway (build das imagens):    docker compose -f docker-compose.dev.yml up --build
+#
+# Os serviços sobem em modo PRODUÇÃO: validam o JWT no serviço de identidade (JWT_JWKS_URI).
+# Sem o serviço de identidade no ar, as rotas protegidas respondem 401. Para desenvolver com
+# token falso, rode os dois pelo Maven/IntelliJ com o profile "local" (ver README.md da raiz).
+name: modulo-16-17
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: integrador
+      POSTGRES_USER: own_produtos
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-produtos_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U own_produtos -d integrador"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  catalogo:
+    build:
+      context: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/integrador
+      DB_USER: own_produtos
+      DB_PASSWORD: ${DB_PASSWORD:-produtos_dev}
+      JWT_ISSUER: ${JWT_ISSUER:-http://identity.local}
+      JWT_JWKS_URI: ${JWT_JWKS_URI:-http://identity:8081/api/identity/.well-known/jwks.json}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-produtos}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost:4200}
+    ports:
+      - "8083:8083"
+
+  precificacao:
+    build:
+      context: ./backend/backendprecificacao
+    depends_on:
+      db:
+        condition: service_healthy
+      catalogo:
+        condition: service_started   # o catálogo cria o schema (migrations V1-V3)
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/integrador
+      DB_USER: own_produtos
+      DB_PASSWORD: ${DB_PASSWORD:-produtos_dev}
+      JWT_ISSUER: ${JWT_ISSUER:-http://identity.local}
+      JWT_JWKS_URI: ${JWT_JWKS_URI:-http://identity:8081/api/identity/.well-known/jwks.json}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-produtos}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost:4200}
+    ports:
+      - "8084:8084"
+
+  gateway:
+    image: nginx:alpine
+    depends_on:
+      - catalogo
+      - precificacao
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:
