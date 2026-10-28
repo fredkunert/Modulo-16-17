@@ -1,0 +1,141 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["backend-v*"]
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  testes:
+    name: Testes (H2)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - run: mvn -B -ntp verify
+      - name: Relatórios de teste
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-h2
+          path: backend/target/surefire-reports/
+
+  testes-postgres:
+    name: Testes + migrations (PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: catalogo_test
+          POSTGRES_USER: usuario_teste
+          POSTGRES_PASSWORD: senha_teste
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U usuario_teste -d catalogo_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      # Aplica as migrations reais (Flyway) e valida o mapeamento JPA contra elas.
+      # AutenticacaoLocalTest fixa um H2 próprio em @SpringBootTest; ele já roda no job "testes".
+      - run: >-
+          mvn -B -ntp test
+          -Dtest=!AutenticacaoLocalTest
+          -Dspring.datasource.url=jdbc:postgresql://localhost:5432/catalogo_test
+          -Dspring.datasource.username=usuario_teste
+          -Dspring.datasource.password=senha_teste
+          -Dspring.flyway.enabled=true
+          -Dspring.jpa.hibernate.ddl-auto=validate
+      - name: Relatórios de teste
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-postgres
+          path: backend/target/surefire-reports/
+
+  imagem:
+    name: Imagem Docker
+    needs: [testes, testes-postgres]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          load: true
+          tags: centinela/produtos-api:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Sobe banco + API pelo compose e espera o health responder UP.
+      - name: Smoke test
+        env:
+          JWT_ISSUER: https://auth.ci
+          JWT_JWKS_URI: https://auth.ci/jwks
+          JWT_AUDIENCE: produtos
+        run: |
+          docker compose --profile app up -d --no-build --wait --wait-timeout 180
+          curl -fsS http://localhost:8083/api/produtos/health
+      - name: Logs em caso de falha
+        if: failure()
+        run: docker compose --profile app logs
+      - name: Encerrar
+        if: always()
+        run: docker compose --profile app down -v
+
+      # Publica no GitHub Container Registry só em tags backend-v* (ex.: backend-v1.0.0).
+      - name: Metadados da imagem
+        if: startsWith(github.ref, 'refs/tags/backend-v')
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/produtos-api
+          tags: |
+            type=match,pattern=backend-v(.*),group=1
+            type=raw,value=latest
+      - name: Login no GHCR
+        if: startsWith(github.ref, 'refs/tags/backend-v')
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publicar
+        if: startsWith(github.ref, 'refs/tags/backend-v')
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha

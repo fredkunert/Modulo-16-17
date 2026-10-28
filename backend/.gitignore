@@ -2,3 +2,4 @@ target/
 .idea/
 *.iml
 .env
+rodar-local.ps1

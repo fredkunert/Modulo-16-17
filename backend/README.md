@@ -97,19 +97,11 @@ Respostas usam `success`, `data`, `message` e `errors`. Cadastros retornam 201 c
 
 ## Integração com precificação e banco compartilhado
 
-<<<<<<< HEAD
 PUT/GET restrito de precificação e o histórico **não** são implementados neste serviço: ficam em `backendprecificacao/` (porta 8084), que grava na mesma tabela `precificacoes`. O pacote `precificacao` é uma **projeção de leitura** da tabela compartilhada: consulta `preco_venda`, `preco_minimo` e `desconto_maximo`. Sem precificação, esses valores permanecem `null`, nunca zero. Cadastro/PATCH rejeitam campos financeiros com 400. Custos, margem, markup, impostos e comissão não são expostos.
 
 `V1__catalogo.sql` cria as três tabelas cadastrais e a estrutura compartilhada de `precificacoes` necessária à leitura. `V2__view_publicada.sql` cria `produtos.vw_pub_itens`, sem dados sensíveis ou limites comerciais, e concede leitura à role `usr_chamados` se ela existir. O serviço de relatórios continua responsável por filtrar o tenant autenticado.
 
 As migrations são uma base para **banco vazio**. Este serviço é o **dono de todas as migrations** do schema `produtos`: `V3__precificacao_historico.sql` acrescenta a coluna `moeda` e a tabela de histórico usadas pelo `backendprecificacao`, que roda com Flyway desligado. Novas mudanças nessas tabelas entram aqui, como novas versões. Não convertem automaticamente o banco antigo com `item`, `empresa_id`, `distribuidors`, categoria UUID e unidades MES/ANO. Dados legados precisam de migração própria e revisão. Execute as migrations com o proprietário do schema. Se `usr_chamados` for criada depois, será necessária uma nova migration de concessão.
-=======
-Esta entrega não implementa PUT/GET restrito de precificação nem seu histórico. O pacote `precificacao` é uma **projeção de leitura** da tabela compartilhada: consulta `preco_venda`, `preco_minimo` e `desconto_maximo`. Sem precificação, esses valores permanecem `null`, nunca zero. Cadastro/PATCH rejeitam campos financeiros com 400. Custos, margem, markup, impostos e comissão não são expostos.
-
-`V1__catalogo.sql` cria as três tabelas cadastrais e a estrutura compartilhada de `precificacoes` necessária à leitura. `V2__view_publicada.sql` cria `produtos.vw_pub_itens`, sem dados sensíveis ou limites comerciais, e concede leitura à role `usr_chamados` se ela existir. O serviço de relatórios continua responsável por filtrar o tenant autenticado.
-
-As migrations são uma base para **banco vazio**. Antes de integrar ao repositório comum, alinhe a numeração e a criação de `precificacoes` com seu colega: não duplique uma migration/tabela já existente. Não convertem automaticamente o banco antigo com `item`, `empresa_id`, `distribuidors`, categoria UUID e unidades MES/ANO. Dados legados precisam de migração própria e revisão. Execute as migrations com o proprietário do schema. Se `usr_chamados` for criada depois, será necessária uma nova migration de concessão.
->>>>>>> 40f9dc65ec16201a3b7dfb1e72d4833ebf4f2bc5
 
 ## Testes
 

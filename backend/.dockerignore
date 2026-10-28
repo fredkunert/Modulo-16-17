@@ -5,3 +5,10 @@ target/
 *.iml
 .git
 .env
+.env.*
+rodar-local.ps1
+info/
+*.md
+exemplos.http
+docker/
+compose.yaml

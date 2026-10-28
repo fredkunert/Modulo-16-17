@@ -3,10 +3,7 @@ import ProjetoIntegrador.comum.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
-<<<<<<< HEAD
 import org.springframework.security.config.Customizer;
-=======
->>>>>>> 40f9dc65ec16201a3b7dfb1e72d4833ebf4f2bc5
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -20,11 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
     @Bean
     SecurityFilterChain security(HttpSecurity http,ObjectMapper mapper,JwtAuthenticationConverter converter) throws Exception {
-<<<<<<< HEAD
         http.cors(Customizer.withDefaults()).csrf(c -> c.disable()).sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-=======
-        http.csrf(c -> c.disable()).sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
->>>>>>> 40f9dc65ec16201a3b7dfb1e72d4833ebf4f2bc5
             .authorizeHttpRequests(a -> a.requestMatchers("/api/produtos/health","/error").permitAll().anyRequest().authenticated())
             .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(converter))
                 .authenticationEntryPoint((req,res,e) -> {
