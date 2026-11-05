@@ -3,7 +3,7 @@ package br.edu.pi2026.produtos.precificacao;
 import br.edu.pi2026.produtos.common.NaoEncontradoException;
 import br.edu.pi2026.produtos.common.NegocioException;
 import br.edu.pi2026.produtos.common.TenantContext;
-import br.edu.pi2026.produtos.item.ItemRepository;
+import ProjetoIntegrador.item.repository.ItemRepository;
 import br.edu.pi2026.produtos.precificacao.dto.PrecificacaoRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -138,7 +138,7 @@ public class PrecificacaoService {
     }
 
     private void garantirItemExiste(UUID itemId, String tenantId) {
-        itemRepository.findByIdAndTenantIdAndDeletedAtIsNull(itemId, tenantId)
+        itemRepository.findByIdAndTenantId(itemId, tenantId)
                 .orElseThrow(() -> new NaoEncontradoException("Item não encontrado."));
     }
 

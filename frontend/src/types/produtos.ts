@@ -34,6 +34,7 @@ export interface Item {
   distribuidorId: string | null;
   categoria: Categoria;
   descricao: string | null;
+  imagemUrl: string | null;
   unidade: Unidade;
   periodicidade: Periodicidade;
   quantidadeMinima: string;
@@ -54,6 +55,7 @@ export interface ItemCriacao {
   distribuidorId: string | null;
   categoria: Categoria;
   descricao: string | null;
+  imagemUrl: string | null;
   unidade: Unidade;
   periodicidade: Periodicidade;
   quantidadeMinima: string;
@@ -76,7 +78,7 @@ export interface BuscaResultado {
   rota: string;
 }
 
-// Contratos espelhados de backend/backendprecificacao/.../precificacao/dto
+// Contratos espelhados do módulo de precificação do backend.
 
 export type MarkupTipo = "PERCENTUAL" | "FATOR";
 export type ValorTipo = "PERCENTUAL" | "MONETARIO";
