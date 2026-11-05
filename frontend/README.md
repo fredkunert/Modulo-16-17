@@ -1,13 +1,13 @@
 # Frontend — Catálogo de Produtos (Centinela)
 
-Interface do módulo **Produtos** (itens, fabricantes e distribuidores) para o backend em [`../backend`](../backend), seguindo o design system em [`../backend/info`](../backend/info).
+Interface do módulo **Produtos** (itens, fabricantes e distribuidores) para o backend em [`../backend`](../backend).
 
 Stack: React 19 · TypeScript · Vite 8 · Tailwind CSS v4 (`@tailwindcss/vite`) · `lucide-react`.
 
 ## Executar
 
-1. Inicie o backend no perfil `local` (veja [`TESTE-LOCAL.md`](../backend/TESTE-LOCAL.md)) — porta **8083**.
-   Para a aba **Precificação**, inicie também o `backendprecificacao` no perfil `local` — porta **8084** (veja [`ENDPOINTS-PRECIFICACAO.md`](../backend/backendprecificacao/ENDPOINTS-PRECIFICACAO.md)).
+1. Inicie o backend no perfil `local` (veja [`docs/TESTE-LOCAL.md`](../docs/TESTE-LOCAL.md)) — porta **8083**.
+   Para a aba **Precificação**, inicie também o `backendprecificacao` no perfil `local` — porta **8084** (veja [`docs/ENDPOINTS-PRECIFICACAO.md`](../docs/ENDPOINTS-PRECIFICACAO.md)).
 2. No diretório `frontend`:
 
 ```powershell

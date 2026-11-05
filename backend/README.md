@@ -1,4 +1,4 @@
-**Teste sem o login [TESTE-LOCAL.md](TESTE-LOCAL.md).**
+**Teste sem o login [docs/TESTE-LOCAL.md](../docs/TESTE-LOCAL.md).**
 
 # Catálogo de produtos — versão corrigida
 

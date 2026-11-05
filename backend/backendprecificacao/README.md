@@ -30,7 +30,7 @@ src/main/java/br/edu/pi2026/produtos/
 ├── common/         ApiResponse, ApiErro, PaginaResposta, exceções, GlobalExceptionHandler, TenantContext
 └── config/         SegurancaJwtConfig (produção), SecurityConfig + DevAuthFilter (só profile local), CorsConfig
 contratos/precificacao.yaml   contrato OpenAPI
-PRECIFICACAO.md               regras de negócio e testes
+../../docs/PRECIFICACAO.md    regras de negócio e testes
 requests.http                 roteiro de testes manuais (IntelliJ)
 Dockerfile
 ```
@@ -38,7 +38,7 @@ Dockerfile
 ## Rodar localmente (desenvolvimento)
 
 1. **Banco** (na raiz do repositório): `docker compose -f docker-compose.dev.yml up -d db`
-2. **Catálogo** (pasta `backend`), profile `local` — cria o schema e emite token de teste (ver `backend/TESTE-LOCAL.md`).
+2. **Catálogo** (pasta `backend`), profile `local` — cria o schema e emite token de teste (ver [`docs/TESTE-LOCAL.md`](../../docs/TESTE-LOCAL.md)).
    Variáveis: `DB_URL=jdbc:postgresql://localhost:5432/integrador`, `DB_USER=own_produtos`, `DB_PASSWORD=produtos_dev`.
 3. **Esta pasta**, profile `local`, com as mesmas variáveis de banco. No IntelliJ: Run Configuration de `ProdutosApplication`,
    *Active profiles* `local`, *Environment variables* `DB_URL=jdbc:postgresql://localhost:5432/integrador;DB_USER=own_produtos;DB_PASSWORD=produtos_dev`.
@@ -64,7 +64,7 @@ Para cadastrar no serviço de identidade:
 
 - `produtos.precificacao.ver`
 - `produtos.precificacao.editar`
-- `produtos.precificacao.ver_valores_sensiveis` — **proposta**, ver `PRECIFICACAO.md`. Sem ela, custo/margem/markup/comissão voltam `null`.
+- `produtos.precificacao.ver_valores_sensiveis` — **proposta**, ver [`docs/PRECIFICACAO.md`](../../docs/PRECIFICACAO.md). Sem ela, custo/margem/markup/comissão voltam `null`.
 
 ## Endpoints da API de Precificação
 
