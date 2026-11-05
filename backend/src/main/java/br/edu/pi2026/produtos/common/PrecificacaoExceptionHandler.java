@@ -16,7 +16,7 @@ import java.util.List;
  * (Contrato de Integração, seção 8.2) e os códigos HTTP da seção 8.4.
  */
 @RestControllerAdvice
-public class GlobalExceptionHandler {
+public class PrecificacaoExceptionHandler {
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ApiResponse<Void>> tratar(ObjectOptimisticLockingFailureException ex) {
@@ -63,9 +63,4 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.erro("Sem permissão para executar esta operação."));
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> tratar(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.erro("Erro inesperado ao processar a requisição."));
-    }
 }

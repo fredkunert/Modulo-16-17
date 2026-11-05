@@ -202,8 +202,8 @@ class CatalogoIntegrationTest {
     }
     @Test void consultaPrecosComoNumerosSemVazarSensivelENaoAlteraAoEditar() throws Exception {
         String id=criar(produto("PRECO"),"a").get("id").asText();
-        jdbc.update("insert into produtos.precificacoes (id,tenant_id,item_id,preco_venda,preco_minimo,desconto_maximo,created_at,updated_at,created_by,updated_by,versao) values (?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,'teste','teste',0)",
-            UUID.randomUUID(),"a",UUID.fromString(id),new java.math.BigDecimal("123.45"),null,new java.math.BigDecimal("12.5000"));
+        jdbc.update("insert into produtos.precificacoes (id,tenant_id,item_id,preco_venda,preco_minimo,desconto_maximo,moeda,created_at,updated_at,created_by,updated_by,versao) values (?,?,?,?,?,?,?,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,'teste','teste',0)",
+            UUID.randomUUID(),"a",UUID.fromString(id),new java.math.BigDecimal("123.45"),null,new java.math.BigDecimal("12.5000"),"BRL");
         mvc.perform(get(BASE+"/itens/"+id+"/resumo").with(usuario("a",RESUMO)))
             .andExpect(status().isOk()).andExpect(jsonPath("$.data",aMapWithSize(12)))
             .andExpect(jsonPath("$.data.precoVenda").isNumber()).andExpect(jsonPath("$.data.precoVenda").value(123.45))

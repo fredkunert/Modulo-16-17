@@ -25,7 +25,7 @@ detalhe de implementação:
 | `PUT` | `/api/produtos/itens/{itemId}/precificacao` | `produtos.precificacao.editar` |
 | `GET` | `/api/produtos/itens/{itemId}/precificacao/historico` | `produtos.precificacao.ver` |
 
-Contrato completo em [`contratos/precificacao.yaml`](../backend/backendprecificacao/contratos/precificacao.yaml).
+Contrato completo em [`contratos/precificacao.yaml`](../backend/contratos/precificacao.yaml).
 
 ## Validação de formato e precisão (BE2-02)
 

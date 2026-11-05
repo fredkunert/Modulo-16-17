@@ -97,11 +97,14 @@ Respostas usam `success`, `data`, `message` e `errors`. Cadastros retornam 201 c
 
 ## Integração com precificação e banco compartilhado
 
-PUT/GET restrito de precificação e o histórico **não** são implementados neste serviço: ficam em `backendprecificacao/` (porta 8084), que grava na mesma tabela `precificacoes`. O pacote `precificacao` é uma **projeção de leitura** da tabela compartilhada: consulta `preco_venda`, `preco_minimo` e `desconto_maximo`. Sem precificação, esses valores permanecem `null`, nunca zero. Cadastro/PATCH rejeitam campos financeiros com 400. Custos, margem, markup, impostos e comissão não são expostos.
+PUT/GET de precificação e o histórico são implementados pelo módulo `precificacao`
+deste mesmo backend, na porta 8083. O módulo grava na tabela compartilhada
+`precificacoes`, enquanto o catálogo consulta a projeção de leitura. Sem
+precificação, os valores permanecem `null`, nunca zero.
 
 `V1__catalogo.sql` cria as três tabelas cadastrais e a estrutura compartilhada de `precificacoes` necessária à leitura. `V2__view_publicada.sql` cria `produtos.vw_pub_itens`, sem dados sensíveis ou limites comerciais, e concede leitura à role `usr_chamados` se ela existir. O serviço de relatórios continua responsável por filtrar o tenant autenticado.
 
-As migrations são uma base para **banco vazio**. Este serviço é o **dono de todas as migrations** do schema `produtos`: `V3__precificacao_historico.sql` acrescenta a coluna `moeda` e a tabela de histórico usadas pelo `backendprecificacao`, que roda com Flyway desligado. Novas mudanças nessas tabelas entram aqui, como novas versões. Não convertem automaticamente o banco antigo com `item`, `empresa_id`, `distribuidors`, categoria UUID e unidades MES/ANO. Dados legados precisam de migração própria e revisão. Execute as migrations com o proprietário do schema. Se `usr_chamados` for criada depois, será necessária uma nova migration de concessão.
+As migrations são uma base para **banco vazio**. Este serviço é o **dono de todas as migrations** do schema `produtos`: `V3__precificacao_historico.sql` acrescenta a coluna `moeda` e a tabela de histórico usadas pelo módulo de precificação. Novas mudanças nessas tabelas entram aqui, como novas versões. Não convertem automaticamente o banco antigo com `item`, `empresa_id`, `distribuidors`, categoria UUID e unidades MES/ANO. Dados legados precisam de migração própria e revisão. Execute as migrations com o proprietário do schema. Se `usr_chamados` for criada depois, será necessária uma nova migration de concessão.
 
 ## Testes
 
@@ -118,6 +121,6 @@ Para executar os testes HTTP também em um PostgreSQL **exclusivo e descartável
 mvn test '-Dspring.datasource.url=jdbc:postgresql://localhost:5432/catalogo_test' '-Dspring.datasource.username=usuario_teste' '-Dspring.datasource.password=senha_teste' '-Dspring.flyway.enabled=true' '-Dspring.jpa.hibernate.ddl-auto=validate'
 ```
 
-Os testes limpam as tabelas de negócio antes de cada caso. Nunca aponte este comando para banco com dados que deseja preservar. Eles não homologam o provedor JWT da equipe nem o módulo de precificação do colega.
+Os testes limpam as tabelas de negócio antes de cada caso. Nunca aponte este comando para banco com dados que deseja preservar. Eles não homologam o provedor JWT da equipe.
 
 Referências técnicas: [Spring Security — JWT Resource Server](https://docs.spring.io/spring-security/reference/6.3/servlet/oauth2/resource-server/jwt.html) e [Spring MVC — RequestBody](https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-methods/requestbody.html).

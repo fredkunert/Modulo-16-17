@@ -13,9 +13,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * precificação quase ao mesmo tempo) vira 409 no envelope padrão, em vez de
  * estourar 500 ou deixar a segunda escrita sobrescrever a primeira calada.
  */
-class GlobalExceptionHandlerTest {
+class PrecificacaoExceptionHandlerTest {
 
-    private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
+    private final PrecificacaoExceptionHandler handler = new PrecificacaoExceptionHandler();
 
     @Test
     void conflitoDeConcorrenciaVira409ComCodigoExplicito() {

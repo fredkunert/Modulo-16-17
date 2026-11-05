@@ -76,7 +76,7 @@ export interface BuscaResultado {
   rota: string;
 }
 
-// Contratos espelhados de backend/backendprecificacao/.../precificacao/dto
+// Contratos espelhados do módulo de precificação do backend.
 
 export type MarkupTipo = "PERCENTUAL" | "FATOR";
 export type ValorTipo = "PERCENTUAL" | "MONETARIO";

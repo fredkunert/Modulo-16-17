@@ -2,8 +2,8 @@ package br.edu.pi2026.produtos.precificacao;
 
 import br.edu.pi2026.produtos.common.NaoEncontradoException;
 import br.edu.pi2026.produtos.common.TenantContext;
-import br.edu.pi2026.produtos.item.Item;
-import br.edu.pi2026.produtos.item.ItemRepository;
+import ProjetoIntegrador.item.model.Item;
+import ProjetoIntegrador.item.repository.ItemRepository;
 import br.edu.pi2026.produtos.precificacao.dto.PrecificacaoRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,15 +54,13 @@ class PrecificacaoServiceTest {
         lenient().when(tenantContext.getUsuarioId()).thenReturn(usuarioId);
 
         Item item = new Item();
-        item.setId(itemId);
-        item.setTenantId(tenantId);
-        lenient().when(itemRepository.findByIdAndTenantIdAndDeletedAtIsNull(itemId, tenantId))
+        lenient().when(itemRepository.findByIdAndTenantId(itemId, tenantId))
                 .thenReturn(Optional.of(item));
     }
 
     @Test
     void buscarLancaNaoEncontradoQuandoItemNaoExisteOuEhDeOutroTenant() {
-        when(itemRepository.findByIdAndTenantIdAndDeletedAtIsNull(itemId, tenantId))
+        when(itemRepository.findByIdAndTenantId(itemId, tenantId))
                 .thenReturn(Optional.empty());
 
         assertThrows(NaoEncontradoException.class, () -> service.buscar(itemId));
@@ -152,7 +150,7 @@ class PrecificacaoServiceTest {
 
     @Test
     void historicoLancaNaoEncontradoQuandoItemEhDeOutroTenant() {
-        when(itemRepository.findByIdAndTenantIdAndDeletedAtIsNull(itemId, tenantId))
+        when(itemRepository.findByIdAndTenantId(itemId, tenantId))
                 .thenReturn(Optional.empty());
 
         assertThrows(NaoEncontradoException.class,
@@ -181,7 +179,7 @@ class PrecificacaoServiceTest {
     @Test
     void precificacaoDeUmTenantNaoEVisivelPorOutroTenant() {
         String tenantB = "outro-tenant";
-        when(itemRepository.findByIdAndTenantIdAndDeletedAtIsNull(itemId, tenantB))
+        when(itemRepository.findByIdAndTenantId(itemId, tenantB))
                 .thenReturn(Optional.empty());
 
         TenantContext contextoDoTenantB = mock(TenantContext.class);

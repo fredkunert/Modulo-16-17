@@ -9,7 +9,7 @@ import java.util.UUID;
 
 /** Tabela produtos.precificacoes_historico (migration V3 do serviço de catálogo). */
 @Entity
-@Table(name = "precificacoes_historico")
+@Table(name = "precificacoes_historico", schema = "produtos")
 @Getter
 @Setter
 public class PrecificacaoHistorico {

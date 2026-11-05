@@ -21,7 +21,7 @@ import java.util.UUID;
  * desconto_maximo, deleted_at — não são mapeadas e nunca são tocadas.
  */
 @Entity
-@Table(name = "precificacoes")
+@Table(name = "precificacoes", schema = "produtos")
 @Getter
 @Setter
 public class Precificacao implements Persistable<UUID> {
