@@ -34,6 +34,7 @@ export interface Item {
   distribuidorId: string | null;
   categoria: Categoria;
   descricao: string | null;
+  imagemUrl: string | null;
   unidade: Unidade;
   periodicidade: Periodicidade;
   quantidadeMinima: string;
@@ -54,6 +55,7 @@ export interface ItemCriacao {
   distribuidorId: string | null;
   categoria: Categoria;
   descricao: string | null;
+  imagemUrl: string | null;
   unidade: Unidade;
   periodicidade: Periodicidade;
   quantidadeMinima: string;

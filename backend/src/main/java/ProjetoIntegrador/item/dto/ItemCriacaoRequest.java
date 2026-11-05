@@ -4,4 +4,4 @@ import jakarta.validation.constraints.*;
 import java.util.UUID;
 public record ItemCriacaoRequest(@NotBlank @Size(max=64) String sku,@NotBlank String nome,
     UUID fabricanteId,UUID distribuidorId,@NotNull Categoria categoria,String descricao,
-    @NotNull UnidadeComercial unidade,@NotNull Periodicidade periodicidade,@NotNull String quantidadeMinima,Boolean ativo) {}
+    @NotNull UnidadeComercial unidade,@NotNull Periodicidade periodicidade,@NotNull String quantidadeMinima,Boolean ativo,String imagemUrl) {}
