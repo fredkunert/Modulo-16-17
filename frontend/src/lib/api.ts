@@ -83,6 +83,21 @@ export interface PaginaParams { pagina?: number; tamanho?: number; ordenar?: "no
 export type TipoParceiro = "fabricantes" | "distribuidores";
 
 export const api = {
+  compartilhamento: {
+    criar: (id: string) =>
+      request<{ token: string }>(
+        "POST",
+        `/itens/${id}/compartilhamento`,
+        {}
+      ),
+
+    revogar: (id: string) =>
+      request<void>(
+        "DELETE",
+        `/itens/${id}/compartilhamento`
+      ),
+  },
+  
   health: () => request<unknown>("GET", "/health"),
 
   itens: {
