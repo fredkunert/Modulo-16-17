@@ -12,6 +12,7 @@ interface FormState {
   nome: string;
   categoria: Categoria | "";
   descricao: string;
+  imagemUrl: string;
   fabricanteId: string;
   distribuidorId: string;
   unidade: Unidade | "";
@@ -21,13 +22,13 @@ interface FormState {
 }
 
 const VAZIO: FormState = {
-  sku: "", nome: "", categoria: "", descricao: "", fabricanteId: "", distribuidorId: "",
+  sku: "", nome: "", categoria: "", descricao: "", imagemUrl: "", fabricanteId: "", distribuidorId: "",
   unidade: "", periodicidade: "", quantidadeMinima: "1", ativo: "true",
 };
 
 function deItem(i: Item): FormState {
   return {
-    sku: i.sku, nome: i.nome, categoria: i.categoria, descricao: i.descricao ?? "",
+    sku: i.sku, nome: i.nome, categoria: i.categoria, descricao: i.descricao ?? "", imagemUrl: i.imagemUrl ?? "",
     fabricanteId: i.fabricanteId ?? "", distribuidorId: i.distribuidorId ?? "",
     unidade: i.unidade, periodicidade: i.periodicidade,
     quantidadeMinima: String(Number(i.quantidadeMinima)).replace(".", ","), ativo: i.ativo ? "true" : "false",
@@ -91,6 +92,12 @@ export function ItemForm({
     if (!form.categoria) e.categoria = "Selecione a categoria.";
     if (!form.unidade) e.unidade = "Selecione a unidade.";
     if (!form.periodicidade) e.periodicidade = "Selecione a periodicidade.";
+    if (form.imagemUrl.trim()) {
+      try {
+        const url = new URL(form.imagemUrl.trim());
+        if (!["http:", "https:"].includes(url.protocol) || !url.hostname || url.username || url.password || form.imagemUrl.trim().length > 2048) throw new Error();
+      } catch { e.imagemUrl = "Informe um link HTTP ou HTTPS válido para a imagem."; }
+    }
     const q = normalizarQuantidade(form.quantidadeMinima, form.unidade);
     if (q.erro) e.quantidadeMinima = q.erro;
     setErros(e);
@@ -107,6 +114,7 @@ export function ItemForm({
       nome: form.nome.trim(),
       categoria: form.categoria as Categoria,
       descricao: form.descricao.trim() || null,
+      imagemUrl: form.imagemUrl.trim() || null,
       fabricanteId: form.fabricanteId || null,
       distribuidorId: form.distribuidorId || null,
       unidade: form.unidade as Unidade,
@@ -120,6 +128,7 @@ export function ItemForm({
       let salvo: Item;
       if (item) {
         const patch: ItemAtualizacao = {};
+        if (dados.imagemUrl !== (item.imagemUrl ?? null)) patch.imagemUrl = dados.imagemUrl;
         if (dados.sku !== item.sku) patch.sku = dados.sku;
         if (dados.nome !== item.nome) patch.nome = dados.nome;
         if (dados.categoria !== item.categoria) patch.categoria = dados.categoria;
@@ -206,6 +215,9 @@ export function ItemForm({
           </FormField>
           <FormField label="Nome" required colSpan={2} error={erros.nome}>
             <Input value={form.nome} onChange={(e) => upd("nome", e.target.value)} placeholder="Ex.: Licença de backup" invalid={!!erros.nome} />
+          </FormField>
+          <FormField label="URL da imagem" colSpan={2} error={erros.imagemUrl} hint="Opcional. Cole o link direto da imagem do produto. Apague para voltar às iniciais.">
+            <Input type="url" value={form.imagemUrl} onChange={(e) => upd("imagemUrl", e.target.value)} placeholder="https://exemplo.com/logo.png" maxLength={2048} invalid={!!erros.imagemUrl} />
           </FormField>
           <FormField label="Descrição" colSpan={2} error={erros.descricao}>
             <Textarea value={form.descricao} onChange={(e) => upd("descricao", e.target.value)} placeholder="Ex.: Backup por usuário" />

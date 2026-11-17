@@ -7,7 +7,6 @@ Stack: React 19 · TypeScript · Vite 8 · Tailwind CSS v4 (`@tailwindcss/vite`)
 ## Executar
 
 1. Inicie o backend no perfil `local` (veja [`docs/TESTE-LOCAL.md`](../docs/TESTE-LOCAL.md)) — porta **8083**.
-   Para a aba **Precificação**, inicie também o `backendprecificacao` no perfil `local` — porta **8084** (veja [`docs/ENDPOINTS-PRECIFICACAO.md`](../docs/ENDPOINTS-PRECIFICACAO.md)).
 2. No diretório `frontend`:
 
 ```powershell
@@ -18,7 +17,7 @@ npm run dev
 Abra http://localhost:5173. No perfil `local`, o frontend obtém sozinho um token em `POST /api/produtos/dev/token` e o renova após um 401.
 Sem o perfil `local`, use **Usar token da equipe** e cole um JWT válido.
 
-Em desenvolvimento, as chamadas a `/api` passam pelo proxy do Vite (`vite.config.ts`): `/api/produtos/itens/{id}/precificacao…` vai para `http://127.0.0.1:8084` (altere com `PRECIFICACAO_URL` no `.env`) e o resto para `http://127.0.0.1:8083` (altere com `BACKEND_URL`) — a mesma divisão do `gateway/nginx.conf`. Em produção, sirva o `dist/` atrás do mesmo domínio da API ou defina `VITE_API_URL`.
+Em desenvolvimento, as chamadas a `/api` passam pelo proxy do Vite (`vite.config.ts`) para `http://127.0.0.1:8083` (altere com `BACKEND_URL` no `.env`). Em produção, sirva o `dist/` atrás do mesmo domínio da API ou defina `VITE_API_URL`.
 
 ## Telas
 

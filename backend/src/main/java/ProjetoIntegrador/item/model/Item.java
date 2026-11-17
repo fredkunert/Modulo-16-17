@@ -8,6 +8,12 @@ import java.math.BigDecimal;
 public class Item extends AuditavelBase {
     @Id private UUID id=UUID.randomUUID();
     @Column(nullable=false) private boolean ativo=true;
+    @Column(name="imagem_url",length=2048) private String imagemUrl;
+    public String getImagemUrl() { return imagemUrl; }
+    public void setImagemUrl(String valor) { imagemUrl=valor; }
+    @Column(name="token_publico",unique=true) private UUID tokenPublico;
+    public UUID getTokenPublico() { return tokenPublico; }
+    public void setTokenPublico(UUID valor) { tokenPublico=valor; }
     public Item() {}
     public UUID getId() { return id; }
     public boolean isAtivo() { return ativo; }

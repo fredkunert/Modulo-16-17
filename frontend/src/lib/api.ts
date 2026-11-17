@@ -20,8 +20,8 @@ export class ApiError extends Error {
 
 // A sessão registra aqui como obter o token atual e como renová-lo após um 401.
 let tokenAtual: () => string | null = () => null;
-let renovarToken: (() => Promise<boolean>) | null = null;
-export function configurarAutenticacao(getter: () => string | null, renovar: (() => Promise<boolean>) | null) {
+let renovarToken: ((token: string | null) => Promise<boolean>) | null = null;
+export function configurarAutenticacao(getter: () => string | null, renovar: ((token: string | null) => Promise<boolean>) | null) {
   tokenAtual = getter;
   renovarToken = renovar;
 }
@@ -36,10 +36,10 @@ async function request<T>(method: string, path: string, body?: unknown, tentouRe
   try {
     res = await fetch(`${BASE}${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   } catch {
-    throw new ApiError(0, "Não foi possível conectar ao backend. Verifique se os serviços estão em execução (catálogo na porta 8083, precificação na 8084).");
+    throw new ApiError(0, "Não foi possível conectar ao backend. Verifique se o serviço está em execução na porta 8083.");
   }
 
-  if (res.status === 401 && !tentouRenovar && renovarToken && (await renovarToken())) {
+  if (res.status === 401 && !tentouRenovar && renovarToken && (await renovarToken(token))) {
     return request<T>(method, path, body, true);
   }
 
@@ -83,6 +83,21 @@ export interface PaginaParams { pagina?: number; tamanho?: number; ordenar?: "no
 export type TipoParceiro = "fabricantes" | "distribuidores";
 
 export const api = {
+  compartilhamento: {
+    criar: (id: string) =>
+      request<{ token: string }>(
+        "POST",
+        `/itens/${id}/compartilhamento`,
+        {}
+      ),
+
+    revogar: (id: string) =>
+      request<void>(
+        "DELETE",
+        `/itens/${id}/compartilhamento`
+      ),
+  },
+  
   health: () => request<unknown>("GET", "/health"),
 
   itens: {
@@ -94,7 +109,7 @@ export const api = {
 
   busca: (q: string) => request<BuscaResultado[]>("GET", `/busca${qs({ q })}`),
 
-  /** Serviço de precificação (porta 8084); em dev, o proxy do Vite/gateway separa as rotas. */
+  /** Rotas de precificação do backend unificado. */
   precificacao: {
     buscar: (itemId: string) => request<Precificacao>("GET", `/itens/${itemId}/precificacao`),
     /** Substitui a precificação inteira: campo enviado como null fica vazio. */

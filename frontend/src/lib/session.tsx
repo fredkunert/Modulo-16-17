@@ -12,7 +12,7 @@ export interface Sessao {
   usuario: string;
   permissoes: string[];
   expiraEm: number; // epoch ms
-  origem: "local" | "manual";
+  origem: "local" | "manual" | "plataforma";
   perfil?: PerfilLocal;
 }
 
@@ -28,18 +28,14 @@ interface SessionCtx {
 }
 
 const Ctx = createContext<SessionCtx | null>(null);
-const STORAGE_KEY = "centinela.produtos.sessao";
+export const embutidoNaPlataforma = window.parent !== window;
 
-function ler(): Sessao | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const s = JSON.parse(raw) as Sessao;
-    return s.expiraEm > Date.now() + 30_000 ? s : null;
-  } catch { return null; }
-}
-function gravar(s: Sessao | null) {
-  try { s ? localStorage.setItem(STORAGE_KEY, JSON.stringify(s)) : localStorage.removeItem(STORAGE_KEY); } catch { /* armazenamento indisponível */ }
+type MensagemParaPlataforma =
+  | { tipo: "modulo:pronto" | "modulo:token-expirado" }
+  | { tipo: "modulo:altura"; altura: number };
+
+function avisarPlataforma(mensagem: MensagemParaPlataforma) {
+  window.parent.postMessage(mensagem, window.location.origin);
 }
 
 /** Lê o payload do JWT apenas para exibição; a validação real é do backend. */
@@ -52,16 +48,12 @@ function decodificar(token: string): Record<string, unknown> {
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [estado, setEstado] = useState<Estado>(() => {
-    const s = ler();
-    return s ? { status: "ok", sessao: s } : { status: "carregando" };
-  });
+  const [estado, setEstado] = useState<Estado>({ status: "carregando" });
   const sessao = estado.status === "ok" ? estado.sessao : null;
-  const sessaoRef = useRef(sessao);
-  sessaoRef.current = sessao;
+  const sessaoRef = useRef<Sessao | null>(null);
+  const renovacao = useRef<{ promessa: Promise<boolean>; resolver: (ok: boolean) => void } | null>(null);
 
   const aplicar = useCallback((s: Sessao) => {
-    gravar(s);
     sessaoRef.current = s;
     setEstado({ status: "ok", sessao: s });
   }, []);
@@ -79,28 +71,30 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         : e instanceof ApiError && (e.status === 404 || e.status === 403)
           ? "O backend não está no perfil \"local\" — inicie com -Dspring-boot.run.profiles=local ou informe um token da equipe."
           : (e as Error).message;
-      gravar(null);
       sessaoRef.current = null;
       setEstado({ status: "erro", mensagem: msg });
       throw e;
     }
   }, [aplicar]);
 
-  const entrarComToken = useCallback((token: string) => {
+  const aplicarToken = useCallback((token: string, origem: "manual" | "plataforma", usuario?: string) => {
     const claims = decodificar(token.trim());
-    const perms = claims.permissions ?? claims.permissoes ?? [];
+    const perms = claims.perms ?? claims.permissions ?? claims.permissoes ?? [];
     aplicar({
       token: token.trim(),
       tenantId: String(claims.tenant_id ?? claims.clientId ?? "—"),
-      usuario: String(claims.sub ?? "—"),
+      usuario: usuario ?? String(claims.nome ?? claims.sub ?? "—"),
       permissoes: Array.isArray(perms) ? perms.map(String) : String(perms).split(" "),
       expiraEm: typeof claims.exp === "number" ? claims.exp * 1000 : Date.now() + 3600_000,
-      origem: "manual",
+      origem,
     });
   }, [aplicar]);
 
+  const entrarComToken = useCallback((token: string) => {
+    aplicarToken(token, "manual");
+  }, [aplicarToken]);
+
   const sair = useCallback(() => {
-    gravar(null);
     sessaoRef.current = null;
     setEstado({ status: "erro", mensagem: "Sessão encerrada." });
   }, []);
@@ -109,18 +103,72 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   // Feito no render (e não em useEffect) porque os efeitos das páginas filhas rodam antes dos do provider.
   configurarAutenticacao(
     () => sessaoRef.current?.token ?? null,
-    async () => {
+    async (tokenRecusado) => {
       const s = sessaoRef.current;
+      if (s?.origem === "plataforma") {
+        if (s.token !== tokenRecusado) return true;
+        if (!renovacao.current) {
+          let resolver!: (ok: boolean) => void;
+          const promessa = new Promise<boolean>((resolve) => {
+            const prazo = window.setTimeout(() => resolver(false), 5000);
+            resolver = (ok) => {
+              window.clearTimeout(prazo);
+              renovacao.current = null;
+              resolve(ok);
+            };
+          });
+          renovacao.current = { promessa, resolver };
+          avisarPlataforma({ tipo: "modulo:token-expirado" });
+          return promessa;
+        }
+        return renovacao.current.promessa;
+      }
       if (s?.origem !== "local") return false;
       try { await entrarLocal(s.perfil, s.tenantId); return true; } catch { return false; }
     },
   );
 
-  // Primeiro acesso: tenta obter o token de desenvolvimento automaticamente.
   useEffect(() => {
-    if (estado.status === "carregando") entrarLocal().catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!embutidoNaPlataforma) {
+      if (import.meta.env.DEV) entrarLocal().catch(() => {});
+      else setEstado({ status: "erro", mensagem: "Abra Produtos e Serviços pelo menu do Centinela." });
+      return;
+    }
+
+    const receber = (evento: MessageEvent) => {
+      if (evento.origin !== window.location.origin || evento.source !== window.parent) return;
+      const mensagem = evento.data;
+      const atual = sessaoRef.current;
+      const novaSessao = mensagem?.tipo === "plataforma:sessao";
+      if (novaSessao || mensagem?.tipo === "plataforma:tema") {
+        if (mensagem.tema === "claro" || mensagem.tema === "escuro") {
+          document.documentElement.dataset.tema = mensagem.tema;
+        }
+      }
+      const tokenRenovado = mensagem?.tipo === "plataforma:token" && atual?.origem === "plataforma";
+      if (typeof mensagem?.token !== "string" || (!novaSessao && !tokenRenovado)) return;
+      try {
+        aplicarToken(mensagem.token, "plataforma", novaSessao ? mensagem.usuario?.nome : atual?.usuario);
+        renovacao.current?.resolver(mensagem.token !== atual?.token);
+      } catch {
+        renovacao.current?.resolver(false);
+        sessaoRef.current = null;
+        setEstado({ status: "erro", mensagem: "A sessão recebida do Centinela é inválida." });
+      }
+    };
+    window.addEventListener("message", receber);
+    const tamanho = new ResizeObserver(() => {
+      avisarPlataforma({ tipo: "modulo:altura", altura: document.documentElement.scrollHeight });
+    });
+    tamanho.observe(document.body);
+    avisarPlataforma({ tipo: "modulo:pronto" });
+
+    return () => {
+      renovacao.current?.resolver(false);
+      tamanho.disconnect();
+      window.removeEventListener("message", receber);
+    };
+  }, [aplicarToken, entrarLocal]);
 
   const value = useMemo<SessionCtx>(() => ({
     estado, sessao, entrarLocal, entrarComToken, sair,

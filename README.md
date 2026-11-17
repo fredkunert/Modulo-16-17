@@ -1,8 +1,8 @@
 # Módulo 16-17 — Produtos
 
 Sistema de catálogo e precificação de produtos da Centinela. O projeto é composto
-por uma interface React, dois serviços Spring Boot e um gateway Nginx. Os serviços
-compartilham o banco PostgreSQL `integrador`, no schema `produtos`.
+por uma interface React, um serviço Spring Boot e um gateway Nginx. O backend
+compartilha o banco PostgreSQL `integrador`, no schema `produtos`.
 
 ## Arquitetura
 
@@ -10,7 +10,7 @@ compartilham o banco PostgreSQL `integrador`, no schema `produtos`.
 |---|---|---:|---|
 | Frontend | [`frontend/`](frontend/) | 5173 | Interface web do catálogo |
 | Catálogo | [`backend/`](backend/) | 8083 | Itens, fabricantes, distribuidores e busca |
-| Precificação | [`backend/backendprecificacao/`](backend/backendprecificacao/) | 8084 | Preços, margens e histórico |
+| Precificação | [`backend/src/main/java/br/edu/pi2026/produtos/precificacao/`](backend/src/main/java/br/edu/pi2026/produtos/precificacao/) | 8083 | Preços, margens e histórico |
 | Gateway | [`gateway/nginx.conf`](gateway/nginx.conf) | 8080 | Une as duas APIs em uma porta |
 | PostgreSQL | Docker Compose | 5432 | Banco compartilhado |
 
@@ -38,7 +38,7 @@ Após a inicialização:
 - Frontend: execute-o separadamente e abra <http://localhost:5173>
 - Gateway/API: <http://localhost:8080>
 - Catálogo: <http://localhost:8083>
-- Precificação: <http://localhost:8084>
+- Precificação: <http://localhost:8083>
 - Banco: `localhost:5432`, database `integrador`, usuário `own_produtos`
 
 Para executar somente o banco:
@@ -54,9 +54,8 @@ valores `JWT_ISSUER`, `JWT_JWKS_URI` e `JWT_AUDIENCE`.
 
 ## Executar localmente para desenvolvimento
 
-O profile `local` gera um JWT de desenvolvimento no catálogo e autentica o
-serviço de precificação automaticamente. Ele deve ser usado somente na máquina
-do desenvolvedor.
+O profile `local` gera um JWT de desenvolvimento para o backend. Ele deve ser
+usado somente na máquina do desenvolvedor.
 
 ### 1. Subir o banco
 
@@ -64,7 +63,7 @@ do desenvolvedor.
 docker compose -f docker-compose.dev.yml up -d db
 ```
 
-### 2. Subir o catálogo
+### 2. Subir o backend
 
 Em um terminal, na pasta [`backend/`](backend/):
 
@@ -75,24 +74,10 @@ $env:DB_PASSWORD = 'produtos_dev'
 mvn spring-boot:run '-Dspring-boot.run.profiles=local'
 ```
 
-O catálogo executa as migrations e fica disponível em
+O backend executa as migrations e fica disponível em
 `http://127.0.0.1:8083`.
 
-### 3. Subir a precificação
-
-Em outro terminal, na pasta
-[`backend/backendprecificacao/`](backend/backendprecificacao/):
-
-```powershell
-$env:DB_URL = 'jdbc:postgresql://localhost:5432/integrador'
-$env:DB_USER = 'own_produtos'
-$env:DB_PASSWORD = 'produtos_dev'
-mvn spring-boot:run '-Dspring-boot.run.profiles=local'
-```
-
-O serviço fica disponível em `http://127.0.0.1:8084`.
-
-### 4. Subir o frontend
+### 3. Subir o frontend
 
 Em outro terminal, na pasta [`frontend/`](frontend/):
 
@@ -103,11 +88,9 @@ npm run dev
 
 Abra <http://localhost:5173>. O Vite encaminha automaticamente:
 
-- `/api/produtos/itens/{id}/precificacao...` para a porta 8084;
-- as demais rotas `/api` para a porta 8083.
+- todas as rotas `/api` para a porta 8083.
 
-As URLs podem ser alteradas com `PRECIFICACAO_URL` e `BACKEND_URL` no
-`.env` do frontend. Para produção, use `VITE_API_URL` conforme
+A URL pode ser alterada com `BACKEND_URL` no `.env` do frontend. Para produção, use `VITE_API_URL` conforme
 [`frontend/README.md`](frontend/README.md).
 
 ## Autenticação local
@@ -186,7 +169,7 @@ Content-Type: application/json
 
 ### Precificação
 
-Serviço padrão: porta 8084. O `{itemId}` é o UUID de um item existente no
+Serviço padrão: porta 8083. O `{itemId}` é o UUID de um item existente no
 catálogo. Permissões: `produtos.precificacao.ver`,
 `produtos.precificacao.editar` e, para valores sensíveis,
 `produtos.precificacao.ver_valores_sensiveis`.
@@ -200,7 +183,7 @@ catálogo. Permissões: `produtos.precificacao.ver`,
 Exemplo de atualização:
 
 ```http
-PUT http://localhost:8084/api/produtos/itens/{itemId}/precificacao
+PUT http://localhost:8083/api/produtos/itens/{itemId}/precificacao
 Content-Type: application/json
 
 {
@@ -218,7 +201,7 @@ Content-Type: application/json
 ```
 
 O contrato detalhado está em
-[`backend/backendprecificacao/contratos/precificacao.yaml`](backend/backendprecificacao/contratos/precificacao.yaml),
+[`backend/contratos/precificacao.yaml`](backend/contratos/precificacao.yaml),
 e as regras completas estão em
 [`docs/ENDPOINTS-PRECIFICACAO.md`](docs/ENDPOINTS-PRECIFICACAO.md).
 
@@ -243,11 +226,10 @@ permissão insuficiente, `404` para recurso inexistente, `409` para conflito e
 ## Documentação e testes manuais
 
 - Catálogo: [`backend/README.md`](backend/README.md)
-- Precificação: [`backend/backendprecificacao/README.md`](backend/backendprecificacao/README.md)
 - Documentação operacional: [`docs/DEVOPS.md`](docs/DEVOPS.md)
 - Teste local: [`docs/TESTE-LOCAL.md`](docs/TESTE-LOCAL.md)
 - Requisições do catálogo: [`backend/exemplos.http`](backend/exemplos.http)
-- Requisições de precificação: [`backend/backendprecificacao/requests.http`](backend/backendprecificacao/requests.http)
+- Requisições de precificação: [`backend/requests-precificacao.http`](backend/requests-precificacao.http)
 - Regras de precificação: [`docs/PRECIFICACAO.md`](docs/PRECIFICACAO.md)
 
 ## Testes e build
@@ -256,14 +238,6 @@ Backend do catálogo:
 
 ```powershell
 cd backend
-mvn test
-mvn package
-```
-
-Backend de precificação:
-
-```powershell
-cd backend/backendprecificacao
 mvn test
 mvn package
 ```
@@ -282,7 +256,7 @@ exclusivo e descartável.
 
 ## Configuração de produção
 
-Fora do profile `local`, configure em ambos os serviços:
+Fora do profile `local`, configure no backend:
 
 ```text
 DB_URL=jdbc:postgresql://<host>:5432/integrador

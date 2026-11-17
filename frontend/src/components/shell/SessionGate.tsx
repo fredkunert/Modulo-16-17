@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { KeyRound, Loader2, PlugZap } from "lucide-react";
 import { Button } from "@/components/ui";
-import { useSession } from "@/lib/session";
+import { embutidoNaPlataforma, useSession } from "@/lib/session";
 import { TokenModal } from "./HeaderMenus";
 import { Logo } from "./Logo";
 
@@ -15,6 +15,14 @@ export function SessionGate() {
     setTentando(true);
     try { await entrarLocal(); } catch { /* a mensagem fica em estado.mensagem */ } finally { setTentando(false); }
   };
+
+  if (embutidoNaPlataforma || !import.meta.env.DEV) {
+    return (
+      <main className="grid min-h-full place-items-center p-6" role="status">
+        {estado.status === "erro" ? estado.mensagem : "Aguardando a sessão do Centinela…"}
+      </main>
+    );
+  }
 
   return (
     <div className="min-h-full flex items-center justify-center bg-brand-950 p-4">

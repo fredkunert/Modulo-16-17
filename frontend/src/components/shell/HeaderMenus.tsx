@@ -115,7 +115,7 @@ export function UserMenu() {
           <p className="text-sm font-bold text-brand-950 truncate">{sessao.usuario}</p>
           <p className="text-xs text-gray-500 truncate">Tenant: <span className="font-mono">{sessao.tenantId}</span></p>
           <p className="text-xs text-gray-400 mt-0.5">
-            {sessao.origem === "local" ? `Token local de desenvolvimento · perfil ${sessao.perfil}` : "Token informado manualmente"}
+            {sessao.origem === "local" ? `Token local de desenvolvimento · perfil ${sessao.perfil}` : sessao.origem === "plataforma" ? "Sessão do Centinela" : "Token informado manualmente"}
           </p>
           <div className="flex flex-wrap gap-1 mt-2">
             {sessao.permissoes.map((p) => <Badge key={p} variant="green">{p.replace("produtos.item.", "")}</Badge>)}
@@ -130,8 +130,12 @@ export function UserMenu() {
               </MenuItem>
             </>
           )}
-          <MenuItem icon={<KeyRound className="w-4 h-4" />} onClick={() => { setOpen(false); setTokenModal(true); }}>Usar token da equipe</MenuItem>
-          <MenuItem icon={<LogOut className="w-4 h-4" />} onClick={sair} danger>Encerrar sessão</MenuItem>
+          {sessao.origem !== "plataforma" && (
+            <>
+              <MenuItem icon={<KeyRound className="w-4 h-4" />} onClick={() => { setOpen(false); setTokenModal(true); }}>Usar token da equipe</MenuItem>
+              <MenuItem icon={<LogOut className="w-4 h-4" />} onClick={sair} danger>Encerrar sessão</MenuItem>
+            </>
+          )}
         </div>
       </Dropdown>
       <TokenModal open={tokenModal} onClose={() => setTokenModal(false)} />

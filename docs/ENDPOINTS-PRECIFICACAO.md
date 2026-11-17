@@ -1,12 +1,11 @@
 ## Endpoints da API de Precificação
 
-Serviço de precificação, porta **8084** (`http://localhost:8084`). Pelo gateway de desenvolvimento (`docker-compose.dev.yml`) as mesmas rotas ficam em `http://localhost:8080`, junto com as do catálogo.
-Contrato completo em OpenAPI: [`contratos/precificacao.yaml`](../backend/backendprecificacao/contratos/precificacao.yaml).
+Serviço de precificação, integrado ao backend principal na porta **8083** (`http://localhost:8083`). Pelo gateway de desenvolvimento (`docker-compose.dev.yml`) as mesmas rotas ficam em `http://localhost:8080`.
+Contrato completo em OpenAPI: [`contratos/precificacao.yaml`](../backend/contratos/precificacao.yaml).
 
-> Para testar localmente, rode com o profile `local` ativo (`SPRING_PROFILES_ACTIVE=local`).
-> Nele um usuário fixo (`usuario-local`, tenant `tenant-local`) é autenticado automaticamente com todas as
-> permissões, sem precisar de token. O `{itemId}` precisa ser de um item **criado no serviço de catálogo**
-> com o mesmo tenant.
+> Para testar localmente, rode com o profile `local` ativo (`SPRING_PROFILES_ACTIVE=local`)
+> e use o token emitido pelo endpoint de desenvolvimento. O `{itemId}` precisa ser
+> de um item criado no backend com o mesmo tenant.
 
 ### Resumo
 
@@ -171,7 +170,7 @@ Sem a permissão `produtos.precificacao.ver_valores_sensiveis`, os campos abaixo
 ### Exemplo de uso (JavaScript)
 
 ```js
-const BASE_URL = "http://localhost:8084"; // ou http://localhost:8080 pelo gateway
+const BASE_URL = "http://localhost:8083"; // ou http://localhost:8080 pelo gateway
 
 // Consultar
 const res = await fetch(`${BASE_URL}/api/produtos/itens/${itemId}/precificacao`);

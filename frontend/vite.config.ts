@@ -3,10 +3,28 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   return {
-    plugins: [react(), tailwindcss()],
+    base: command === "build" ? "/modulos/produtos/" : "/",
+    plugins: [react(), tailwindcss(), {
+      name: "token-local-apenas-no-computador",
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          const caminho = (req.url ?? "").split("?")[0];
+          const ip = req.socket.remoteAddress ?? "";
+          // O proxy usa loopback no backend; preserve aqui a restrição do emissor local.
+          const publico = req.method === "GET" && (/^\/api\/produtos\/publico\/itens\/[0-9a-f-]+$/i.test(caminho) || caminho === "/api/produtos/health");
+          if (caminho.startsWith("/api") && !publico && !["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(ip)) {
+            res.statusCode = 403;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ success: false, data: null, message: "Acesso de desenvolvimento permitido somente neste computador.", errors: [] }));
+            return;
+          }
+          next();
+        });
+      },
+    }],
     resolve: {
       alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
     },
@@ -14,12 +32,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       // O backend não habilita CORS: em desenvolvimento as chamadas passam pelo proxy do Vite.
       // No perfil "local" o Spring escuta só em 127.0.0.1, por isso o alvo não usa "localhost".
-      // A precificação é outro serviço (8084) com o mesmo prefixo /api/produtos — mesma divisão do gateway/nginx.conf.
-      // A ordem importa: a regra mais específica precisa vir antes de "/api".
       proxy: {
-        "^/api/produtos/itens/[^/]+/precificacao": {
-          target: env.PRECIFICACAO_URL || "http://127.0.0.1:8084", changeOrigin: false,
-        },
         "/api": { target: env.BACKEND_URL || "http://127.0.0.1:8083", changeOrigin: false },
       },
     },

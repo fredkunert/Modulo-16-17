@@ -33,7 +33,7 @@ export function ItemTable({ itens, porId, onSelect }: Props) {
             >
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <Avatar text={i.nome} />
+                  <Avatar text={i.nome} src={i.imagemUrl} />
                   <div className="min-w-0">
                     <p className="font-medium text-brand-950 truncate max-w-[280px]">{i.nome}</p>
                     <p className="text-xs text-gray-400 font-mono">{i.sku}</p>
@@ -69,7 +69,7 @@ export function ItemCards({ itens, porId, onSelect }: Props) {
             className={`text-left bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand-200 transition-all p-4 flex flex-col ${i.ativo ? "" : "opacity-60"}`}
           >
             <div className="flex items-start justify-between gap-2">
-              <Avatar text={i.nome} className="w-10 h-10 rounded-lg" />
+              <Avatar text={i.nome} src={i.imagemUrl} className="w-10 h-10 rounded-lg" />
               {statusBadge(i.ativo ? "ativo" : "inativo")}
             </div>
             <p className="font-semibold text-brand-950 mt-3 leading-snug line-clamp-2">{i.nome}</p>

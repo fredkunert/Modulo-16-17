@@ -30,6 +30,7 @@ public class ItemService {
         String tenant=contexto.tenant();
         Item i=new Item();
         i.registrarCriacao(tenant,contexto.autor());
+        i.setImagemUrl(imagemUrl(r.imagemUrl()));
         i.setSku(sku(r.sku())); i.setNome(Patch.nome(r.nome(),"nome"));
         i.setCategoria(r.categoria()); i.setDescricao(r.descricao()); i.setUnidade(r.unidade());
         i.setPeriodicidade(r.periodicidade()); i.setQuantidadeMinima(Quantidade.ler(r.quantidadeMinima()));
@@ -46,6 +47,7 @@ public class ItemService {
         UUID distribuidor=c.containsKey("distribuidorId")?Patch.uuid(c,"distribuidorId"):i.getDistribuidorId();
         validarVinculos(i,fabricante,distribuidor);
         i.setFabricanteId(fabricante); i.setDistribuidorId(distribuidor);
+        if(c.containsKey("imagemUrl")) i.setImagemUrl(imagemUrl(Patch.texto(c,"imagemUrl",true)));
         if(c.containsKey("sku")) i.setSku(sku(Patch.texto(c,"sku",false)));
         if(c.containsKey("nome")) i.setNome(Patch.nome(Patch.texto(c,"nome",false),"nome"));
         if(c.containsKey("categoria")) i.setCategoria(Categoria.from(Patch.texto(c,"categoria",false)));
@@ -115,6 +117,19 @@ public class ItemService {
         if(distribuidor!=null && !distribuidor.equals(i.getDistribuidorId())) {
             var d=distribuidores.bloquear(distribuidor,i.getTenantId()).orElseThrow(RegraException::naoEncontrado);
             if(!d.isAtivo()) throw new RegraException(422,"distribuidorId","PARCEIRO_INATIVO","Distribuidor inativo não pode receber novo vínculo.");
+        }
+    }
+    private String imagemUrl(String valor) {
+        if(valor==null || valor.isBlank()) return null;
+        String url=valor.strip();
+        try {
+            var uri=new java.net.URI(url);
+            if(url.length()>2048 || uri.getHost()==null || uri.getUserInfo()!=null ||
+                !("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme())))
+                throw new IllegalArgumentException();
+            return url;
+        } catch(Exception e) {
+            throw RegraException.formato("imagemUrl","Informe uma URL HTTP ou HTTPS válida, com até 2048 caracteres.");
         }
     }
     private String sku(String valor) {

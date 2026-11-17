@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Ban, BadgeDollarSign, Copy, Pencil, RotateCcw, X } from "lucide-react";
+import { Ban, BadgeDollarSign, Copy, Pencil, RotateCcw, X, QrCode } from "lucide-react";
 import { Badge, Button, DetailField, DetailSection, statusBadge, useToast } from "@/components/ui";
 import { CATEGORIA_VARIANT, dataHora, moeda, percentual, quantidade } from "@/lib/format";
 import { PERIODICIDADE_LABEL, UNIDADE_LABEL, type Item, type Parceiro } from "@/types/produtos";
 import { useSession } from "@/lib/session";
 import { useParceiro } from "@/lib/useParceiros";
 import { PrecificacaoTab } from "./PrecificacaoTab";
+import { ProdutoQrCode } from "./ProdutoQrCode";
 
 const TABS = ["Visão geral", "Precificação", "Registro"];
 
@@ -23,6 +24,7 @@ export function ItemDetailPanel({
   onClose: () => void;
 }) {
   const [tab, setTab] = useState(0);
+  const [qrAberto, setQrAberto] = useState(false);
   const toast = useToast();
   const podeVerPrecificacao = useSession().can("produtos.precificacao.ver");
   const fab = useParceiro("fabricantes", item.fabricanteId, fabricante);
@@ -53,9 +55,10 @@ export function ItemDetailPanel({
               </span>
             </div>
           </div>
-          <div className="flex gap-1.5 shrink-0">
+          <div className="flex gap-1.5 shrink-0 flex-wrap">
             {podeEditar && (
               <>
+                <Button variant="secondary" size="sm" onClick={() => setQrAberto(true)}><QrCode className="w-3 h-3" /> QR Code</Button>
                 <Button variant="secondary" size="sm" onClick={onEdit}>
                   <Pencil className="w-3 h-3" /> Editar
                 </Button>
@@ -72,6 +75,7 @@ export function ItemDetailPanel({
         </div>
       </div>
 
+      {qrAberto && <ProdutoQrCode key={item.id} item={item} onClose={() => setQrAberto(false)} />}
       <div className="flex border-b border-gray-100 bg-white shrink-0 overflow-x-auto">
         {TABS.map((t, i) => (
           <button

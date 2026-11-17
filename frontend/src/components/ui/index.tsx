@@ -384,11 +384,13 @@ export function Stepper({ steps, current }: { steps: string[]; current: number }
 
 /* ─────────────────────── Avatar / Spinner / EmptyState ─────────────────────── */
 
-export function Avatar({ text, className }: { text: string; className?: string }) {
+export function Avatar({ text, className, src }: { text: string; className?: string; src?: string | null }) {
+  const [falhou, setFalhou] = useState(false);
+  useEffect(() => setFalhou(false), [src]);
   const iniciais = text.replace(/[^\p{L}\p{N} ]/gu, " ").trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "?";
   return (
     <span className={cx("w-8 h-8 rounded-full bg-brand-950 text-brand-400 font-bold flex items-center justify-center text-xs shrink-0", className)}>
-      {iniciais}
+      {src && !falhou ? <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setFalhou(true)} className="w-full h-full rounded-[inherit] object-contain bg-white" /> : iniciais}
     </span>
   );
 }

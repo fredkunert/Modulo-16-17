@@ -43,7 +43,7 @@ public class TokenLocalController {
             throw RegraException.formato("tenantId", "Informe um tenant não vazio de até 255 caracteres.");
         }
         List<String> permissoes = switch (perfil) {
-            // As permissões de precificação valem no serviço backendprecificacao (8084).
+            // As permissões de precificação valem no módulo integrado ao backend.
             case "catalogo" -> List.of("produtos.item.criar", "produtos.item.editar",
                     "produtos.item.ver", "produtos.item.ver_resumo",
                     "produtos.precificacao.ver", "produtos.precificacao.editar",

@@ -18,7 +18,9 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain security(HttpSecurity http,ObjectMapper mapper,JwtAuthenticationConverter converter) throws Exception {
         http.cors(Customizer.withDefaults()).csrf(c -> c.disable()).sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(a -> a.requestMatchers("/api/produtos/health","/error").permitAll().anyRequest().authenticated())
+            .authorizeHttpRequests(a -> a.requestMatchers("/api/produtos/health","/error").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET,"/api/produtos/publico/itens/*").permitAll()
+                .anyRequest().authenticated())
             .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(converter))
                 .authenticationEntryPoint((req,res,e) -> {
                     res.setStatus(401); res.setContentType("application/json");

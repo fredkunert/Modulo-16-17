@@ -1,10 +1,11 @@
 server:
   port: ${PORT:8083}
+  max-http-request-header-size: 32KB
 spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/integrador}
-    username: ${DB_USER:own_produtos}
-    password: ${DB_PASSWORD}
+    username: ${DB_APP_USER:${DB_USER:own_produtos}}
+    password: ${DB_APP_PASSWORD:${DB_PASSWORD}}
     hikari:
       connection-timeout: 3000
   jpa:
@@ -16,13 +17,15 @@ spring:
         jdbc.time_zone: UTC
   flyway:
     enabled: true
+    user: ${DB_OWNER_USER:${spring.datasource.username}}
+    password: ${DB_OWNER_PASSWORD:${spring.datasource.password}}
     schemas: produtos
     default-schema: produtos
   jackson:
     default-property-inclusion: always
 produtos:
   jwt:
-    issuer: ${JWT_ISSUER}
-    jwk-set-uri: ${JWT_JWKS_URI}
-    audience: ${JWT_AUDIENCE}
-    permissions-claim: ${JWT_PERMISSIONS_CLAIM:permissions}
+    issuer: ${JWT_ISSUER:${IDENTITY_BASE_URL:http://identity:8081}}
+    jwk-set-uri: ${JWT_JWKS_URI:${JWKS_URI:http://identity:8081/api/identity/.well-known/jwks.json}}
+    audience: ${JWT_AUDIENCE:plataforma}
+    permissions-claim: ${JWT_PERMISSIONS_CLAIM:perms}
