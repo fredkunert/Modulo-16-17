@@ -1,0 +1,23 @@
+# Servidor do front do módulo. A porta vem da variável PORTA (Contrato §13.3).
+server {
+    listen ${PORTA};
+    server_name _;
+    root /usr/share/nginx/html;
+
+    # Só a própria plataforma pode embutir esta página (Contrato §12.8)
+    add_header Content-Security-Policy "frame-ancestors 'self'" always;
+    add_header X-Content-Type-Options nosniff always;
+
+    location = /modulos/produtos {
+        return 301 /modulos/produtos/;
+    }
+
+    location /modulos/produtos/ {
+        try_files $uri $uri/ /modulos/produtos/index.html;
+    }
+
+    location /modulos/produtos/assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        add_header Content-Security-Policy "frame-ancestors 'self'" always;
+    }
+}

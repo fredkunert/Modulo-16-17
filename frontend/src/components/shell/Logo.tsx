@@ -2,7 +2,7 @@
 export function Logo({ className = "w-9 h-9" }: { className?: string }) {
   return (
     <span className={`rounded-full bg-white overflow-hidden flex items-center justify-center shrink-0 ${className}`}>
-      <img src="/logo.centinela.png" alt="Centinela Soluções" className="w-full h-full object-cover scale-[1.3]" />
+      <img src={`${import.meta.env.BASE_URL}logo.centinela.png`} alt="Centinela Soluções" className="w-full h-full object-cover scale-[1.3]" />
     </span>
   );
 }

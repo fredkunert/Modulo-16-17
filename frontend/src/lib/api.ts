@@ -20,8 +20,8 @@ export class ApiError extends Error {
 
 // A sessão registra aqui como obter o token atual e como renová-lo após um 401.
 let tokenAtual: () => string | null = () => null;
-let renovarToken: (() => Promise<boolean>) | null = null;
-export function configurarAutenticacao(getter: () => string | null, renovar: (() => Promise<boolean>) | null) {
+let renovarToken: ((token: string | null) => Promise<boolean>) | null = null;
+export function configurarAutenticacao(getter: () => string | null, renovar: ((token: string | null) => Promise<boolean>) | null) {
   tokenAtual = getter;
   renovarToken = renovar;
 }
@@ -39,7 +39,7 @@ async function request<T>(method: string, path: string, body?: unknown, tentouRe
     throw new ApiError(0, "Não foi possível conectar ao backend. Verifique se o serviço está em execução na porta 8083.");
   }
 
-  if (res.status === 401 && !tentouRenovar && renovarToken && (await renovarToken())) {
+  if (res.status === 401 && !tentouRenovar && renovarToken && (await renovarToken(token))) {
     return request<T>(method, path, body, true);
   }
 
