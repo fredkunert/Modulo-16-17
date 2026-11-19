@@ -6,6 +6,12 @@ import { ToastProvider } from "@/components/ui";
 import { SessionProvider } from "@/lib/session";
 import { ProdutoPublico } from "@/features/itens/components/ProdutoPublico";
 
+// Em desenvolvimento, ?tema=escuro simula o tema escuro que o Centinela envia ao embutir o módulo.
+if (import.meta.env.DEV) {
+  const tema = new URLSearchParams(window.location.search).get("tema");
+  if (tema === "claro" || tema === "escuro") document.documentElement.dataset.tema = tema;
+}
+
 function Entrada() {
   const lerToken = () => new URLSearchParams(window.location.hash.slice(1)).get("produto");
   const [token, setToken] = useState(lerToken);

@@ -17,6 +17,49 @@
   --color-brand-50:  #F0FDF4;
 }
 
+/*
+ * Tema escuro: ativado quando o Centinela envia { tema: "escuro" } (session.tsx grava em
+ * <html data-tema>). Os cinzas são invertidos via variáveis e as poucas cores "de fundo claro"
+ * são sobrescritas abaixo, para que as telas existentes funcionem sem classes dark: espalhadas.
+ */
+:root[data-tema="escuro"] {
+  color-scheme: dark;
+  --superficie: #0F2340;
+  --color-gray-50: #0C1A2E;
+  --color-gray-100: #18294A;
+  --color-gray-200: #223659;
+  --color-gray-300: #2E4568;
+  --color-gray-400: #8193AD;
+  --color-gray-500: #97A6BC;
+  --color-gray-600: #B4C0D1;
+  --color-gray-700: #CBD5E1;
+  --color-gray-800: #E2E8F0;
+  --color-gray-900: #F1F5F9;
+  --color-gray-950: #F8FAFC;
+  --color-red-50: rgb(239 68 68 / 0.14);
+  --color-amber-50: rgb(245 158 11 / 0.14);
+  --color-yellow-50: rgb(234 179 8 / 0.14);
+  --color-orange-50: rgb(249 115 22 / 0.14);
+  --color-blue-50: rgb(59 130 246 / 0.14);
+  --color-purple-50: rgb(168 85 247 / 0.14);
+}
+/* Fora de @layer de propósito: regras sem camada vencem as utilities do Tailwind. */
+:root[data-tema="escuro"] {
+  .bg-white { background-color: var(--superficie); }
+  .text-brand-950, .text-brand-900 { color: #F1F5F9; }
+  .text-brand-800, .text-brand-700, .hover\:text-brand-800:hover { color: var(--color-brand-400); }
+  .bg-brand-50, .hover\:bg-brand-50:hover { background-color: rgb(16 185 129 / 0.12); }
+  .bg-brand-100 { background-color: rgb(16 185 129 / 0.18); }
+  .hover\:bg-brand-200:hover { background-color: rgb(16 185 129 / 0.26); }
+  .border-brand-200, .hover\:border-brand-200:hover { border-color: rgb(16 185 129 / 0.4); }
+  .border-brand-950 { border-color: var(--color-gray-300); }
+  .text-red-700 { color: #FCA5A5; }
+  .text-amber-800, .text-yellow-800 { color: #FCD34D; }
+  .text-orange-700 { color: #FDBA74; }
+  .text-blue-700 { color: #93C5FD; }
+  .text-purple-700 { color: #D8B4FE; }
+}
+
 html, body, #root { height: 100%; }
 body { @apply bg-gray-50 text-gray-800 antialiased font-sans; }
 

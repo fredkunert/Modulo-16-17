@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactElement, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Factory, Package, Search, Truck } from "lucide-react";
 import { api } from "@/lib/api";
-import { useSession } from "@/lib/session";
+import { embutidoNaPlataforma, useSession } from "@/lib/session";
 import { usePersistentState } from "@/lib/hooks";
 import { SearchModal } from "@/components/shell/SearchModal";
 import { NotificationsMenu, UserMenu } from "@/components/shell/HeaderMenus";
@@ -58,6 +58,41 @@ export default function App() {
   };
   const atual = NAV.find((n) => n.id === page) ?? NAV[0];
   const grupos = [...new Set(NAV.map((n) => n.group))];
+  const busca = (
+    <SearchModal
+      open={buscaAberta}
+      onClose={() => setBuscaAberta(false)}
+      onSelect={(r) => { setBuscaAberta(false); abrirItem(r.id); }}
+    />
+  );
+
+  // Dentro do Centinela a plataforma já desenha sidebar, breadcrumb, busca, notificações e
+  // usuário. O módulo mostra só o conteúdo, com abas para alternar entre as suas telas.
+  if (embutidoNaPlataforma) {
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        <nav className="flex items-center gap-1 px-4 sm:px-5 border-b border-gray-100 shrink-0" aria-label="Telas de Produtos">
+          {NAV.map((n) => {
+            const ativo = n.id === page;
+            return (
+              <button
+                key={n.id}
+                onClick={() => setPage(n.id)}
+                aria-current={ativo ? "page" : undefined}
+                className={`flex items-center gap-2 h-11 px-3 -mb-px border-b-2 text-sm transition-colors
+                  ${ativo ? "border-brand-600 text-brand-950 font-medium" : "border-transparent text-gray-500 hover:text-gray-800"}`}
+              >
+                {n.icon}
+                {n.label}
+              </button>
+            );
+          })}
+        </nav>
+        <main className="flex-1 min-h-0">{pageMap[page]}</main>
+        {busca}
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -126,11 +161,7 @@ export default function App() {
         <main className="flex-1 min-h-0">{pageMap[page]}</main>
       </div>
 
-      <SearchModal
-        open={buscaAberta}
-        onClose={() => setBuscaAberta(false)}
-        onSelect={(r) => { setBuscaAberta(false); abrirItem(r.id); }}
-      />
+      {busca}
     </div>
   );
 }
