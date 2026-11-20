@@ -7,6 +7,7 @@ import { SearchModal } from "@/components/shell/SearchModal";
 import { NotificationsMenu, UserMenu } from "@/components/shell/HeaderMenus";
 import { SessionGate } from "@/components/shell/SessionGate";
 import { Logo } from "@/components/shell/Logo";
+import { PageHeaderExtra } from "@/components/ui";
 import { ItensPage } from "@/features/itens/ItensPage";
 import { FabricantesPage } from "@/features/fabricantes/FabricantesPage";
 import { DistribuidoresPage } from "@/features/distribuidores/DistribuidoresPage";
@@ -21,9 +22,32 @@ const NAV: NavItem[] = [
   { id: "distribuidores", label: "Distribuidores", icon: <Truck className="w-4 h-4 shrink-0" />, group: "Produtos" },
 ];
 
+// Rotas que o Centinela usa no submenu (itensSubmenu do registro do módulo). A plataforma abre
+// o iframe em /modulos/produtos/<rota>; o módulo avisa trocas de tela com "modulo:navegar".
+const ROTA: Record<Page, string> = { itens: "/", fabricantes: "/fabricantes", distribuidores: "/distribuidores" };
+
+function paginaDaUrl(): Page {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const rota = window.location.pathname.slice(base.length).replace(/\/+$/, "") || "/";
+  const achada = (Object.keys(ROTA) as Page[]).find((p) => ROTA[p] !== "/" && (rota === ROTA[p] || rota.startsWith(`${ROTA[p]}/`)));
+  return achada ?? "itens";
+}
+
+function usePagina(): [Page, (p: Page) => void] {
+  const [salva, setSalva] = usePersistentState<Page>("pagina", "itens");
+  const [daUrl, setDaUrl] = useState<Page>(paginaDaUrl);
+  const irPara = useCallback((p: Page) => {
+    setDaUrl(p);
+    const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+    window.history.replaceState(null, "", base + ROTA[p]);
+    window.parent.postMessage({ tipo: "modulo:navegar", rota: ROTA[p] }, window.location.origin);
+  }, []);
+  return embutidoNaPlataforma ? [daUrl, irPara] : [salva, setSalva];
+}
+
 export default function App() {
   const { estado } = useSession();
-  const [page, setPage] = usePersistentState<Page>("pagina", "itens");
+  const [page, setPage] = usePagina();
   const [recolhida, setRecolhida] = usePersistentState("sidebar.recolhida", false);
   const [buscaAberta, setBuscaAberta] = useState(false);
   const [abrirItemId, setAbrirItemId] = useState<string | null>(null);
@@ -67,11 +91,11 @@ export default function App() {
   );
 
   // Dentro do Centinela a plataforma já desenha sidebar, breadcrumb, busca, notificações e
-  // usuário. O módulo mostra só o conteúdo, com abas para alternar entre as suas telas.
+  // usuário. O módulo mostra só o conteúdo; as abas entre as suas telas ficam logo abaixo do
+  // PageHeader de cada página (via PageHeaderExtra).
   if (embutidoNaPlataforma) {
-    return (
-      <div className="flex flex-col h-full overflow-hidden">
-        <nav className="flex items-center gap-1 px-4 sm:px-5 border-b border-gray-100 shrink-0" aria-label="Telas de Produtos">
+    const abas = (
+        <nav className="flex items-center gap-1 px-4 sm:px-5 bg-white border-b border-gray-100 shrink-0" aria-label="Telas de Produtos">
           {NAV.map((n) => {
             const ativo = n.id === page;
             return (
@@ -88,7 +112,12 @@ export default function App() {
             );
           })}
         </nav>
-        <main className="flex-1 min-h-0">{pageMap[page]}</main>
+    );
+    return (
+      <div className="flex flex-col h-full overflow-hidden">
+        <PageHeaderExtra.Provider value={abas}>
+          <main className="flex-1 min-h-0">{pageMap[page]}</main>
+        </PageHeaderExtra.Provider>
         {busca}
       </div>
     );

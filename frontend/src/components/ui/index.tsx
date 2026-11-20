@@ -316,15 +316,22 @@ export function Pagination({
 
 /* ─────────────────────────────── PageHeader ─────────────────────────────── */
 
+/** Conteúdo exibido logo abaixo de todo PageHeader (ex.: as abas do módulo embutido no Centinela). */
+export const PageHeaderExtra = createContext<ReactNode>(null);
+
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
+  const extra = useContext(PageHeaderExtra);
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 bg-brand-950 text-white shrink-0">
-      <div>
-        <h1 className="text-lg font-bold tracking-tight">{title}</h1>
-        {subtitle && <p className="text-brand-300 text-xs mt-0.5">{subtitle}</p>}
+    <>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 bg-brand-950 text-white shrink-0">
+        <div>
+          <h1 className="text-lg font-bold tracking-tight">{title}</h1>
+          {subtitle && <p className="text-brand-300 text-xs mt-0.5">{subtitle}</p>}
+        </div>
+        {actions && <div className="flex gap-2">{actions}</div>}
       </div>
-      {actions && <div className="flex gap-2">{actions}</div>}
-    </div>
+      {extra}
+    </>
   );
 }
 
