@@ -79,9 +79,11 @@ export function PrecificacaoTab({
 }: { itemId: string; moedaItem: string; onSalvo: () => void }) {
   const { can } = useSession();
   const toast = useToast();
-  const verSensiveis = can("produtos.precificacao.ver_valores_sensiveis");
-  // Sem ver os campos sensíveis, o PUT (que substitui tudo) apagaria valores que o usuário nem enxerga.
-  const podeEditar = can("produtos.precificacao.editar") && verSensiveis;
+  const verSensiveis = can("produtos.precificacao.ver");
+
+  const podeEditar =
+    can("produtos.precificacao.ver") &&
+    can("produtos.precificacao.editar");
 
   const [dados, setDados] = useState<Precificacao | null>(null);
   const [erro, setErro] = useState<ApiError | null>(null);
