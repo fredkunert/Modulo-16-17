@@ -38,8 +38,8 @@ jobs:
         with:
           name: surefire-h2
           path: backend/target/surefire-reports/
-
- testes-postgres:
+          
+testes-postgres:
     name: Testes + migrations (PostgreSQL)
     runs-on: ubuntu-latest
     timeout-minutes: 15
