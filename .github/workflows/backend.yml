@@ -1,12 +1,12 @@
-name: Backend CI
+name: Produtos CI e publicação
 
 on:
   push:
     branches: [main]
     tags: ["backend-v*"]
-    paths: ["backend/**", ".github/workflows/backend.yml"]
+    paths: ["backend/**", "frontend/**", ".github/workflows/backend.yml"]
   pull_request:
-    paths: ["backend/**", ".github/workflows/backend.yml"]
+    paths: ["backend/**", "frontend/**", ".github/workflows/backend.yml"]
   workflow_dispatch:
 
 permissions:
@@ -24,10 +24,9 @@ jobs:
   testes:
     name: Testes (H2)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
@@ -35,7 +34,7 @@ jobs:
       - run: mvn -B -ntp verify
       - name: Relatórios de teste
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: surefire-h2
           path: backend/target/surefire-reports/
@@ -43,7 +42,6 @@ jobs:
   testes-postgres:
     name: Testes + migrations (PostgreSQL)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16-alpine
@@ -56,18 +54,12 @@ jobs:
           --health-cmd "pg_isready -U usuario_teste -d catalogo_test"
           --health-interval 5s --health-timeout 3s --health-retries 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
           cache: maven
-      # Em produção o schema "produtos" é criado pela plataforma; o Flyway não o cria
-      # (create-schemas: false). No banco de teste fazemos o papel da plataforma.
-      - name: Criar schema produtos
-        env:
-          PGPASSWORD: senha_teste
-        run: psql -h localhost -U usuario_teste -d catalogo_test -c "CREATE SCHEMA IF NOT EXISTS produtos"
       # Aplica as migrations reais (Flyway) e valida o mapeamento JPA contra elas.
       # AutenticacaoLocalTest fixa um H2 próprio em @SpringBootTest; ele já roda no job "testes".
       - run: >-
@@ -80,7 +72,7 @@ jobs:
           -Dspring.jpa.hibernate.ddl-auto=validate
       - name: Relatórios de teste
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: surefire-postgres
           path: backend/target/surefire-reports/
@@ -89,13 +81,12 @@ jobs:
     name: Imagem Docker
     needs: [testes, testes-postgres]
     runs-on: ubuntu-latest
-    timeout-minutes: 15
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
 
       - name: Build
         uses: docker/build-push-action@v6
@@ -107,9 +98,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       # Sobe banco + API pelo compose e espera o health responder UP.
-      # O banco do compose já tem o schema "produtos" (é da plataforma).
       - name: Smoke test
-        timeout-minutes: 5
         env:
           JWT_ISSUER: https://auth.ci
           JWT_JWKS_URI: https://auth.ci/jwks
@@ -124,24 +113,26 @@ jobs:
         if: always()
         run: docker compose --profile app down -v
 
+      # Publica no GitHub Container Registry após atualizar a main ou enviar uma tag de versão.
       - name: Metadados da imagem
-        if: startsWith(github.ref, 'refs/tags/backend-v')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/backend-v'))
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository_owner }}/produtos-api
           tags: |
             type=match,pattern=backend-v(.*),group=1
             type=raw,value=latest
+            type=sha,prefix=sha-
       - name: Login no GHCR
-        if: startsWith(github.ref, 'refs/tags/backend-v')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/backend-v'))
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Publicar
-        if: startsWith(github.ref, 'refs/tags/backend-v')
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/backend-v'))
         uses: docker/build-push-action@v6
         with:
           context: backend
@@ -149,3 +140,38 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
+
+  frontend:
+    name: Imagem Docker da tela
+    needs: imagem
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v3
+      - name: Metadados da imagem
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/produtos-front
+          tags: |
+            type=match,pattern=backend-v(.*),group=1
+            type=raw,value=latest,enable=${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/backend-v')) }}
+            type=sha,prefix=sha-
+      - name: Login no GHCR
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/backend-v'))
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compilar e publicar a imagem
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/backend-v')) }}
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha,scope=produtos-front
+          cache-to: type=gha,mode=max,scope=produtos-front
