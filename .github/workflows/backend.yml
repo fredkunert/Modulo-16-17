@@ -39,7 +39,7 @@ jobs:
           name: surefire-h2
           path: backend/target/surefire-reports/
           
-testes-postgres:
+  testes-postgres:
     name: Testes + migrations (PostgreSQL)
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -80,7 +80,7 @@ testes-postgres:
           name: surefire-postgres
           path: backend/target/surefire-reports/
           
-imagem:
+  imagem:
     name: Imagem Docker
     needs: [testes, testes-postgres]
     runs-on: ubuntu-latest
@@ -141,7 +141,7 @@ imagem:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-    frontend:
+  frontend:
     name: Imagem Docker da tela
     needs: imagem
     runs-on: ubuntu-latest
