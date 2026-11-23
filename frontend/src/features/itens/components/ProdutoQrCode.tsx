@@ -23,7 +23,9 @@ export function ProdutoQrCode({ item, onClose }: { item: Item; onClose: () => vo
     if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) throw new Error();
     const host = url.hostname.toLowerCase();
     if (host === "localhost" || host.endsWith(".localhost") || host.startsWith("127.") || host === "[::1]" || host === "0.0.0.0") aviso = "Para abrir no celular, informe o endereço de rede do computador ou o domínio publicado. localhost só funciona neste computador.";
-    url.search = ""; url.hash = `produto=${token ?? ""}`;
+    url.pathname = "/modulos/produtos/";
+    url.search = "";
+    url.hash = `produto=${token ?? ""}`;
     if (token && !aviso) link = url.toString();
   } catch { aviso = "Informe o endereço completo do sistema, começando com http:// ou https://."; }
   useEffect(() => {
