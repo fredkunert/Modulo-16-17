@@ -24,9 +24,10 @@ jobs:
   testes:
     name: Testes (H2)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
@@ -34,11 +35,11 @@ jobs:
       - run: mvn -B -ntp verify
       - name: Relatórios de teste
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: surefire-h2
           path: backend/target/surefire-reports/
-          
+
   testes-postgres:
     name: Testes + migrations (PostgreSQL)
     runs-on: ubuntu-latest
@@ -79,17 +80,18 @@ jobs:
         with:
           name: surefire-postgres
           path: backend/target/surefire-reports/
-          
+
   imagem:
     name: Imagem Docker
     needs: [testes, testes-postgres]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
 
       - name: Build
         uses: docker/build-push-action@v6
@@ -101,6 +103,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Smoke test
+        timeout-minutes: 5
         env:
           JWT_ISSUER: https://auth.ci
           JWT_JWKS_URI: https://auth.ci/jwks
@@ -114,11 +117,11 @@ jobs:
       - name: Encerrar
         if: always()
         run: docker compose -f ../docker-compose.dev.yml --profile app down -v
-      # Publica no GitHub Container Registry após atualizar a main ou enviar uma tag de versão.
+
       - name: Metadados da imagem
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/backend-v'))
         id: meta
-        uses: docker/metadata-action@v6
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/produtos-api
           tags: |
@@ -141,6 +144,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
+
   frontend:
     name: Imagem Docker da tela
     needs: imagem
@@ -149,7 +153,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - name: Metadados da imagem
         id: meta
