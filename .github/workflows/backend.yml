@@ -141,8 +141,7 @@ imagem:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-
-  frontend:
+    frontend:
     name: Imagem Docker da tela
     needs: imagem
     runs-on: ubuntu-latest
