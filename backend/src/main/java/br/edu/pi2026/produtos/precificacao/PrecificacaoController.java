@@ -20,7 +20,8 @@ import java.util.UUID;
 @RequestMapping("/api/produtos/itens/{itemId}/precificacao")
 public class PrecificacaoController {
 
-    private static final String PERMISSAO_VALORES_SENSIVEIS = "produtos.precificacao.ver_valores_sensiveis";
+    private static final String PERMISSAO_VALORES_SENSIVEIS =
+    "produtos.precificacao.ver";
 
     private final PrecificacaoService precificacaoService;
     private final TenantContext tenantContext;
@@ -39,7 +40,7 @@ public class PrecificacaoController {
     }
 
     @PutMapping
-    @PreAuthorize("hasAuthority('produtos.precificacao.editar')")
+    @PreAuthorize("hasAuthority('produtos.precificacao.ver') " +"and hasAuthority('produtos.precificacao.editar')")
     public ResponseEntity<ApiResponse<PrecificacaoResponse>> salvar(@PathVariable UUID itemId,
                                                                       @Valid @RequestBody PrecificacaoRequest request) {
         Precificacao precificacao = precificacaoService.salvar(itemId, request);
