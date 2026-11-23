@@ -1,0 +1,2460 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Catálogo de produtos, fabricantes e distribuidores",
+    "version": "0.4.0",
+    "description": "Contrato dos 15 endpoints do catálogo. Não inclui escrita de precificação nem consulta pública por QR Code, pendente de acordo com a plataforma. Permissões no claim perms. tenant_id e sub de usuários são UUIDs; o tenant não é recebido no corpo nem na query."
+  },
+  "servers": [
+    {
+      "url": "/api/produtos"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/itens": {
+      "post": {
+        "operationId": "criarItem",
+        "summary": "Criar produto",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.criar",
+        "description": "Permissão obrigatória: produtos.item.criar. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "201": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaItem"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "Endereço relativo do cadastro criado.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemCriacao"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listarItens",
+        "summary": "Listar produtos",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.ver",
+        "description": "Permissão obrigatória: produtos.item.ver. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaPaginaItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "ordenar",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "nome,asc",
+                "nome,desc"
+              ],
+              "default": "nome,asc"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoria",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SOFTWARE",
+                "LICENÇA",
+                "SERVIÇO",
+                "PROJETO",
+                "CONSULTORIA",
+                "BACKUP",
+                "ARMAZENAMENTO",
+                "CLOUD",
+                "SEGURANÇA",
+                "ANTIVÍRUS",
+                "EDR",
+                "XDR",
+                "MICROSOFT 365",
+                "GOOGLE WORKSPACE",
+                "SUPORTE",
+                "OUTROS"
+              ]
+            }
+          },
+          {
+            "name": "fabricanteId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "distribuidorId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ativo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ]
+      }
+    },
+    "/itens/{id}": {
+      "get": {
+        "operationId": "consultarItem",
+        "summary": "Consultar produto",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.ver",
+        "description": "Permissão obrigatória: produtos.item.ver. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "atualizarItem",
+        "summary": "Editar ou inativar produto",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.editar",
+        "description": "Permissão obrigatória: produtos.item.editar. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemAtualizacao"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/itens/{id}/resumo": {
+      "get": {
+        "operationId": "resumoItem",
+        "summary": "Consultar resumo do produto",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.ver_resumo",
+        "description": "Permissão obrigatória: produtos.item.ver_resumo. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaItemResumo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/itens/resumo": {
+      "get": {
+        "operationId": "resumosItens",
+        "summary": "Consultar resumos em lote",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.ver_resumo",
+        "description": "Permissão obrigatória: produtos.item.ver_resumo. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaResumosLote"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "De 1 a 100 UUIDs distintos separados por vírgula, sem espaços. Preserva ordem; IDs ausentes ou de outro tenant vão em idsNaoEncontrados."
+          }
+        ]
+      }
+    },
+    "/busca": {
+      "get": {
+        "operationId": "buscarCatalogo",
+        "summary": "Busca global de produtos ativos",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.ver_resumo",
+        "description": "Permissão obrigatória: produtos.item.ver_resumo. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaBusca"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2
+            },
+            "description": "Ao menos 2 caracteres após remover espaços externos. Até cinco produtos ativos, ordenados por nome e ID."
+          }
+        ]
+      }
+    },
+    "/fabricantes": {
+      "post": {
+        "operationId": "criarFabricante",
+        "summary": "Criar fabricante",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.criar",
+        "description": "Permissão obrigatória: produtos.item.criar. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "201": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaParceiro"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "Endereço relativo do cadastro criado.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParceiroCriacao"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listarFabricantes",
+        "summary": "Listar fabricantes",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.ver",
+        "description": "Permissão obrigatória: produtos.item.ver. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaPaginaParceiro"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "ordenar",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "nome,asc",
+                "nome,desc"
+              ],
+              "default": "nome,asc"
+            }
+          }
+        ]
+      }
+    },
+    "/fabricantes/{id}": {
+      "get": {
+        "operationId": "consultarFabricante",
+        "summary": "Consultar fabricante",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.ver",
+        "description": "Permissão obrigatória: produtos.item.ver. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaParceiro"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "atualizarFabricante",
+        "summary": "Editar ou inativar fabricante",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.editar",
+        "description": "Permissão obrigatória: produtos.item.editar. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaParceiro"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParceiroAtualizacao"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/distribuidores": {
+      "post": {
+        "operationId": "criarDistribuidor",
+        "summary": "Criar distribuidor",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.criar",
+        "description": "Permissão obrigatória: produtos.item.criar. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "201": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaParceiro"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "Endereço relativo do cadastro criado.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParceiroCriacao"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listarDistribuidores",
+        "summary": "Listar distribuidores",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.ver",
+        "description": "Permissão obrigatória: produtos.item.ver. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaPaginaParceiro"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "ordenar",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "nome,asc",
+                "nome,desc"
+              ],
+              "default": "nome,asc"
+            }
+          }
+        ]
+      }
+    },
+    "/distribuidores/{id}": {
+      "get": {
+        "operationId": "consultarDistribuidor",
+        "summary": "Consultar distribuidor",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.ver",
+        "description": "Permissão obrigatória: produtos.item.ver. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaParceiro"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "atualizarDistribuidor",
+        "summary": "Editar ou inativar distribuidor",
+        "tags": [
+          "Catálogo"
+        ],
+        "x-permissao": "produtos.item.editar",
+        "description": "Permissão obrigatória: produtos.item.editar. Tenant obtido do token; nunca do corpo ou query.",
+        "responses": {
+          "200": {
+            "description": "Operação realizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespostaParceiro"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON, parâmetros, campos ou precisão inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token ausente, inválido ou expirado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão necessária ausente.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro inexistente ou pertencente a outro tenant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU_DUPLICADO, CONFLITO_INTEGRIDADE ou ALTERACAO_CONCORRENTE.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "QUANTIDADE_INVALIDA ou PARCEIRO_INATIVO.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParceiroAtualizacao"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ErroCampo": {
+        "type": "object",
+        "properties": {
+          "campo": {
+            "type": "string",
+            "nullable": true
+          },
+          "codigo": {
+            "type": "string"
+          },
+          "detalhe": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "campo",
+          "codigo",
+          "detalhe"
+        ]
+      },
+      "Erro": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErroCampo"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message",
+          "errors"
+        ]
+      },
+      "ItemCriacao": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Obrigatório; espaços externos removidos e convertido para maiúsculas. Único por tenant, inclusive itens inativos."
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Não pode conter somente espaços."
+          },
+          "fabricanteId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "distribuidorId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "categoria": {
+            "type": "string",
+            "enum": [
+              "SOFTWARE",
+              "LICENÇA",
+              "SERVIÇO",
+              "PROJETO",
+              "CONSULTORIA",
+              "BACKUP",
+              "ARMAZENAMENTO",
+              "CLOUD",
+              "SEGURANÇA",
+              "ANTIVÍRUS",
+              "EDR",
+              "XDR",
+              "MICROSOFT 365",
+              "GOOGLE WORKSPACE",
+              "SUPORTE",
+              "OUTROS"
+            ]
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "USUARIO",
+              "LICENCA",
+              "ENDPOINT",
+              "SERVIDOR",
+              "VM",
+              "GB",
+              "TB",
+              "CAIXA_POSTAL",
+              "DOMINIO",
+              "HORA",
+              "UNIDADE"
+            ]
+          },
+          "periodicidade": {
+            "type": "string",
+            "enum": [
+              "UNICA",
+              "MENSAL",
+              "TRIMESTRAL",
+              "SEMESTRAL",
+              "ANUAL"
+            ]
+          },
+          "quantidadeMinima": {
+            "type": "string",
+            "pattern": "^-?[0-9]+(\\.[0-9]+)?$",
+            "description": "String decimal com ponto, positiva e até 11 dígitos inteiros. GB, TB e HORA aceitam até 4 casas decimais significativas; demais unidades somente inteiros.",
+            "example": "1"
+          },
+          "ativo": {
+            "type": "boolean",
+            "default": true
+          },
+          "imagemUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "description": "URL HTTP/HTTPS com host, sem credenciais. Null ou string vazia remove a imagem."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "sku",
+          "nome",
+          "categoria",
+          "unidade",
+          "periodicidade",
+          "quantidadeMinima"
+        ]
+      },
+      "ItemAtualizacao": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Obrigatório; espaços externos removidos e convertido para maiúsculas. Único por tenant, inclusive itens inativos."
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Não pode conter somente espaços."
+          },
+          "fabricanteId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "distribuidorId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "categoria": {
+            "type": "string",
+            "enum": [
+              "SOFTWARE",
+              "LICENÇA",
+              "SERVIÇO",
+              "PROJETO",
+              "CONSULTORIA",
+              "BACKUP",
+              "ARMAZENAMENTO",
+              "CLOUD",
+              "SEGURANÇA",
+              "ANTIVÍRUS",
+              "EDR",
+              "XDR",
+              "MICROSOFT 365",
+              "GOOGLE WORKSPACE",
+              "SUPORTE",
+              "OUTROS"
+            ]
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "USUARIO",
+              "LICENCA",
+              "ENDPOINT",
+              "SERVIDOR",
+              "VM",
+              "GB",
+              "TB",
+              "CAIXA_POSTAL",
+              "DOMINIO",
+              "HORA",
+              "UNIDADE"
+            ]
+          },
+          "periodicidade": {
+            "type": "string",
+            "enum": [
+              "UNICA",
+              "MENSAL",
+              "TRIMESTRAL",
+              "SEMESTRAL",
+              "ANUAL"
+            ]
+          },
+          "quantidadeMinima": {
+            "type": "string",
+            "pattern": "^-?[0-9]+(\\.[0-9]+)?$",
+            "description": "String decimal com ponto, positiva e até 11 dígitos inteiros. GB, TB e HORA aceitam até 4 casas decimais significativas; demais unidades somente inteiros.",
+            "example": "1"
+          },
+          "ativo": {
+            "type": "boolean",
+            "default": true
+          },
+          "imagemUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "description": "URL HTTP/HTTPS com host, sem credenciais. Null ou string vazia remove a imagem."
+          }
+        },
+        "additionalProperties": false,
+        "minProperties": 1,
+        "description": "PATCH parcial: campo omitido permanece inalterado. Null permitido apenas para descrição, imagem e vínculos. Não recebe preço nem tenant."
+      },
+      "ItemResumo": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Obrigatório; espaços externos removidos e convertido para maiúsculas. Único por tenant, inclusive itens inativos."
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Não pode conter somente espaços."
+          },
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "USUARIO",
+              "LICENCA",
+              "ENDPOINT",
+              "SERVIDOR",
+              "VM",
+              "GB",
+              "TB",
+              "CAIXA_POSTAL",
+              "DOMINIO",
+              "HORA",
+              "UNIDADE"
+            ]
+          },
+          "periodicidade": {
+            "type": "string",
+            "enum": [
+              "UNICA",
+              "MENSAL",
+              "TRIMESTRAL",
+              "SEMESTRAL",
+              "ANUAL"
+            ]
+          },
+          "quantidadeMinima": {
+            "type": "string",
+            "pattern": "^-?[0-9]+(\\.[0-9]+)?$",
+            "description": "String decimal com ponto, positiva e até 11 dígitos inteiros. GB, TB e HORA aceitam até 4 casas decimais significativas; demais unidades somente inteiros.",
+            "example": "1"
+          },
+          "ativo": {
+            "type": "boolean",
+            "default": true
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "casasDecimaisQuantidade": {
+            "type": "integer",
+            "enum": [
+              0,
+              4
+            ]
+          },
+          "moeda": {
+            "type": "string",
+            "enum": [
+              "BRL"
+            ]
+          },
+          "precoVenda": {
+            "type": "number",
+            "nullable": true,
+            "description": "Valor publicado por precificação; null quando não disponível."
+          },
+          "precoMinimo": {
+            "type": "number",
+            "nullable": true,
+            "description": "Valor publicado por precificação; null quando não disponível."
+          },
+          "descontoMaximo": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "sku",
+          "nome",
+          "unidade",
+          "periodicidade",
+          "quantidadeMinima",
+          "ativo",
+          "id",
+          "casasDecimaisQuantidade",
+          "moeda",
+          "precoVenda",
+          "precoMinimo",
+          "descontoMaximo"
+        ]
+      },
+      "Item": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Obrigatório; espaços externos removidos e convertido para maiúsculas. Único por tenant, inclusive itens inativos."
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Não pode conter somente espaços."
+          },
+          "fabricanteId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "distribuidorId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "categoria": {
+            "type": "string",
+            "enum": [
+              "SOFTWARE",
+              "LICENÇA",
+              "SERVIÇO",
+              "PROJETO",
+              "CONSULTORIA",
+              "BACKUP",
+              "ARMAZENAMENTO",
+              "CLOUD",
+              "SEGURANÇA",
+              "ANTIVÍRUS",
+              "EDR",
+              "XDR",
+              "MICROSOFT 365",
+              "GOOGLE WORKSPACE",
+              "SUPORTE",
+              "OUTROS"
+            ]
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "unidade": {
+            "type": "string",
+            "enum": [
+              "USUARIO",
+              "LICENCA",
+              "ENDPOINT",
+              "SERVIDOR",
+              "VM",
+              "GB",
+              "TB",
+              "CAIXA_POSTAL",
+              "DOMINIO",
+              "HORA",
+              "UNIDADE"
+            ]
+          },
+          "periodicidade": {
+            "type": "string",
+            "enum": [
+              "UNICA",
+              "MENSAL",
+              "TRIMESTRAL",
+              "SEMESTRAL",
+              "ANUAL"
+            ]
+          },
+          "quantidadeMinima": {
+            "type": "string",
+            "pattern": "^-?[0-9]+(\\.[0-9]+)?$",
+            "description": "String decimal com ponto, positiva e até 11 dígitos inteiros. GB, TB e HORA aceitam até 4 casas decimais significativas; demais unidades somente inteiros.",
+            "example": "1"
+          },
+          "ativo": {
+            "type": "boolean",
+            "default": true
+          },
+          "imagemUrl": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 2048,
+            "description": "URL HTTP/HTTPS com host, sem credenciais. Null ou string vazia remove a imagem."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "casasDecimaisQuantidade": {
+            "type": "integer",
+            "enum": [
+              0,
+              4
+            ]
+          },
+          "moeda": {
+            "type": "string",
+            "enum": [
+              "BRL"
+            ]
+          },
+          "precoVenda": {
+            "type": "number",
+            "nullable": true,
+            "description": "Valor publicado por precificação; null quando não disponível."
+          },
+          "precoMinimo": {
+            "type": "number",
+            "nullable": true,
+            "description": "Valor publicado por precificação; null quando não disponível."
+          },
+          "descontoMaximo": {
+            "type": "number",
+            "nullable": true
+          },
+          "criadoEm": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "atualizadoEm": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "sku",
+          "nome",
+          "fabricanteId",
+          "distribuidorId",
+          "categoria",
+          "descricao",
+          "unidade",
+          "periodicidade",
+          "quantidadeMinima",
+          "ativo",
+          "imagemUrl",
+          "id",
+          "casasDecimaisQuantidade",
+          "moeda",
+          "precoVenda",
+          "precoMinimo",
+          "descontoMaximo",
+          "criadoEm",
+          "atualizadoEm"
+        ]
+      },
+      "ResumosLote": {
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemResumo"
+            }
+          },
+          "idsNaoEncontrados": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": [
+          "itens",
+          "idsNaoEncontrados"
+        ]
+      },
+      "ParceiroCriacao": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ativo": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "nome"
+        ]
+      },
+      "ParceiroAtualizacao": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ativo": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "minProperties": 1
+      },
+      "Parceiro": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ativo": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "ativo"
+        ]
+      },
+      "BuscaResultado": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "titulo": {
+            "type": "string"
+          },
+          "subtitulo": {
+            "type": "string"
+          },
+          "rota": {
+            "type": "string",
+            "example": "/itens/22c0050f-aa9b-4a55-a7e1-862bd5d4f4d3"
+          }
+        },
+        "required": [
+          "id",
+          "titulo",
+          "subtitulo",
+          "rota"
+        ]
+      },
+      "PaginaItem": {
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          },
+          "pagina": {
+            "type": "integer"
+          },
+          "tamanho": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "itens",
+          "pagina",
+          "tamanho",
+          "total"
+        ]
+      },
+      "PaginaParceiro": {
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Parceiro"
+            }
+          },
+          "pagina": {
+            "type": "integer"
+          },
+          "tamanho": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "itens",
+          "pagina",
+          "tamanho",
+          "total"
+        ]
+      },
+      "RespostaItem": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Item"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErroCampo"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message",
+          "errors"
+        ]
+      },
+      "RespostaItemResumo": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ItemResumo"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErroCampo"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message",
+          "errors"
+        ]
+      },
+      "RespostaResumosLote": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ResumosLote"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErroCampo"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message",
+          "errors"
+        ]
+      },
+      "RespostaParceiro": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Parceiro"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErroCampo"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message",
+          "errors"
+        ]
+      },
+      "RespostaPaginaItem": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PaginaItem"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErroCampo"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message",
+          "errors"
+        ]
+      },
+      "RespostaPaginaParceiro": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PaginaParceiro"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErroCampo"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message",
+          "errors"
+        ]
+      },
+      "RespostaBusca": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuscaResultado"
+            },
+            "maxItems": 5
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErroCampo"
+            }
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "message",
+          "errors"
+        ]
+      }
+    }
+  }
+}

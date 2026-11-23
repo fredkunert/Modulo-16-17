@@ -1,0 +1,5 @@
+﻿permissao;descricao
+produtos.item.ver;Consultar produtos, fabricantes e distribuidores
+produtos.item.criar;Criar produtos, fabricantes e distribuidores
+produtos.item.editar;Editar ou inativar produtos, fabricantes e distribuidores
+produtos.item.ver_resumo;Consultar resumos e busca global de produtos
