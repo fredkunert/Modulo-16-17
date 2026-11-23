@@ -79,8 +79,8 @@ testes-postgres:
         with:
           name: surefire-postgres
           path: backend/target/surefire-reports/
-        
-  imagem:
+          
+imagem:
     name: Imagem Docker
     needs: [testes, testes-postgres]
     runs-on: ubuntu-latest
