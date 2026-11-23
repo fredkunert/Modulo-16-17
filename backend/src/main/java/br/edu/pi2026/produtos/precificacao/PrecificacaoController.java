@@ -21,7 +21,7 @@ import java.util.UUID;
 public class PrecificacaoController {
 
     private static final String PERMISSAO_VALORES_SENSIVEIS =
-    "produtos.precificacao.ver";
+    "produtos.precificacao.ver_valores_sensiveis";
 
     private final PrecificacaoService precificacaoService;
     private final TenantContext tenantContext;
