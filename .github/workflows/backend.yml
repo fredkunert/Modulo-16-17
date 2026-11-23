@@ -104,15 +104,14 @@ jobs:
           JWT_JWKS_URI: https://auth.ci/jwks
           JWT_AUDIENCE: produtos
         run: |
-          docker compose --profile app up -d --no-build --wait --wait-timeout 180
+          docker compose -f ../docker-compose.dev.yml --profile app up -d --no-build --wait --wait-timeout 180
           curl -fsS http://localhost:8083/api/produtos/health
       - name: Logs em caso de falha
         if: failure()
-        run: docker compose --profile app logs
+        run: docker compose -f ../docker-compose.dev.yml --profile app logs
       - name: Encerrar
         if: always()
-        run: docker compose --profile app down -v
-
+        run: docker compose -f ../docker-compose.dev.yml --profile app down -v
       # Publica no GitHub Container Registry após atualizar a main ou enviar uma tag de versão.
       - name: Metadados da imagem
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/backend-v'))
