@@ -100,7 +100,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Sobe banco + API pelo compose e espera o health responder UP.
       - name: Smoke test
         env:
           JWT_ISSUER: https://auth.ci
