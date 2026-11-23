@@ -24,6 +24,7 @@ spring:
     password: ${DB_OWNER_PASSWORD:${spring.datasource.password}}
     schemas: produtos
     default-schema: produtos
+    create-schemas: false
 
   jackson:
     default-property-inclusion: always
