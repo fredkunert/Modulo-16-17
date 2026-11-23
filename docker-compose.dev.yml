@@ -18,8 +18,6 @@ services:
       retries: 10
 
   catalogo:
-    build:
-      context: ./backend
     image: centinela/produtos-api:local
     profiles: [app]
     depends_on:
