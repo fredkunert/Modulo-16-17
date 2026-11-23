@@ -1,11 +1,3 @@
-# Ambiente de DESENVOLVIMENTO (não substitui o docker-compose da plataforma).
-#
-#   Só o banco (para rodar os serviços pelo IntelliJ/Maven):   docker compose -f docker-compose.dev.yml up -d db
-#   Banco + API + gateway (build das imagens):                 docker compose -f docker-compose.dev.yml up --build
-#
-# A API sobe em modo PRODUÇÃO: valida o JWT no serviço de identidade (JWT_JWKS_URI).
-# Sem o serviço de identidade no ar, as rotas protegidas respondem 401. Para desenvolver com
-# token falso, rode a API pelo Maven/IntelliJ com o profile "local" (ver README.md da raiz).
 name: modulo-16-17
 
 services:
@@ -28,6 +20,7 @@ services:
   catalogo:
     build:
       context: ./backend
+    profiles: [app]
     depends_on:
       db:
         condition: service_healthy
@@ -41,9 +34,16 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost:4200}
     ports:
       - "8083:8083"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:8083/api/produtos/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   gateway:
     image: nginx:alpine
+    profiles: [app]
     depends_on:
       - catalogo
     volumes:
