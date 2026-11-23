@@ -33,7 +33,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/produtos/health", "/error").permitAll()
                 .requestMatchers(
                     HttpMethod.GET,
-                    "/api/produtos/publico/itens/*"
+                    "/api/produtos/publico/itens/*",
+                    "/public/produtos/itens/*"
                 ).permitAll()
                 .anyRequest().authenticated())
             .oauth2ResourceServer(oauth -> oauth
