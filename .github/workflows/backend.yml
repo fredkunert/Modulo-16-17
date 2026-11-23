@@ -39,9 +39,10 @@ jobs:
           name: surefire-h2
           path: backend/target/surefire-reports/
 
-  testes-postgres:
+ testes-postgres:
     name: Testes + migrations (PostgreSQL)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16-alpine
@@ -54,14 +55,16 @@ jobs:
           --health-cmd "pg_isready -U usuario_teste -d catalogo_test"
           --health-interval 5s --health-timeout 3s --health-retries 20
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v6
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
           cache: maven
-      # Aplica as migrations reais (Flyway) e valida o mapeamento JPA contra elas.
-      # AutenticacaoLocalTest fixa um H2 próprio em @SpringBootTest; ele já roda no job "testes".
+      - name: Criar schema produtos
+        env:
+          PGPASSWORD: senha_teste
+        run: psql -h localhost -U usuario_teste -d catalogo_test -c "CREATE SCHEMA IF NOT EXISTS produtos"
       - run: >-
           mvn -B -ntp test
           -Dtest=!AutenticacaoLocalTest
@@ -72,11 +75,11 @@ jobs:
           -Dspring.jpa.hibernate.ddl-auto=validate
       - name: Relatórios de teste
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: surefire-postgres
           path: backend/target/surefire-reports/
-
+        
   imagem:
     name: Imagem Docker
     needs: [testes, testes-postgres]
