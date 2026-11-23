@@ -1,4 +1,9 @@
-CREATE SCHEMA IF NOT EXISTS produtos;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'produtos') THEN
+        CREATE SCHEMA produtos;
+    END IF;
+END $$;
 
 CREATE TABLE produtos.fabricantes (
     id uuid PRIMARY KEY,
