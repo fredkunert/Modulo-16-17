@@ -1,7 +1,6 @@
 server:
   port: ${SERVER_PORT:${PORT:8083}}
   max-http-request-header-size: 32KB
-
 spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/integrador}
@@ -9,7 +8,6 @@ spring:
     password: ${DB_APP_PASSWORD:${DB_PASSWORD:}}
     hikari:
       connection-timeout: 3000
-
   jpa:
     open-in-view: false
     hibernate:
@@ -17,18 +15,15 @@ spring:
     properties:
       hibernate:
         jdbc.time_zone: UTC
-
   flyway:
     enabled: true
+    create-schemas: false
     user: ${DB_OWNER_USER:${spring.datasource.username}}
     password: ${DB_OWNER_PASSWORD:${spring.datasource.password}}
     schemas: produtos
     default-schema: produtos
-    create-schemas: false
-
   jackson:
     default-property-inclusion: always
-
 produtos:
   jwt:
     issuer: ${JWT_ISSUER:${IDENTITY_BASE_URL:http://identity:8081}}
