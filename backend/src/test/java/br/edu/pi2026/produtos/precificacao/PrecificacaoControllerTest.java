@@ -55,7 +55,7 @@ class PrecificacaoControllerTest {
     void consultarDevolveTodosOsCamposQuandoTemPermissaoDeValoresSensiveis() {
         UUID itemId = UUID.randomUUID();
         when(precificacaoService.buscar(itemId)).thenReturn(precificacaoDeExemplo(itemId));
-        when(tenantContext.possuiAutoridade("produtos.precificacao.ver_valores_sensiveis")).thenReturn(true);
+        when(tenantContext.possuiAutoridade("produtos.precificacao.ver")).thenReturn(true);
 
         PrecificacaoController controller = new PrecificacaoController(precificacaoService, tenantContext);
         ResponseEntity<ApiResponse<PrecificacaoResponse>> resposta = controller.consultar(itemId);
@@ -72,7 +72,7 @@ class PrecificacaoControllerTest {
     void consultarOcultaCamposSensiveisSemAPermissaoEspecifica() {
         UUID itemId = UUID.randomUUID();
         when(precificacaoService.buscar(itemId)).thenReturn(precificacaoDeExemplo(itemId));
-        when(tenantContext.possuiAutoridade("produtos.precificacao.ver_valores_sensiveis")).thenReturn(false);
+        when(tenantContext.possuiAutoridade("produtos.precificacao.ver")).thenReturn(false);
 
         PrecificacaoController controller = new PrecificacaoController(precificacaoService, tenantContext);
         ResponseEntity<ApiResponse<PrecificacaoResponse>> resposta = controller.consultar(itemId);
@@ -99,7 +99,7 @@ class PrecificacaoControllerTest {
         salvo.setPreco(new BigDecimal("90.00"));
 
         when(precificacaoService.salvar(itemId, request)).thenReturn(salvo);
-        when(tenantContext.possuiAutoridade("produtos.precificacao.ver_valores_sensiveis")).thenReturn(true);
+        when(tenantContext.possuiAutoridade("produtos.precificacao.ver")).thenReturn(true);
 
         PrecificacaoController controller = new PrecificacaoController(precificacaoService, tenantContext);
         ResponseEntity<ApiResponse<PrecificacaoResponse>> resposta = controller.salvar(itemId, request);
@@ -128,7 +128,7 @@ class PrecificacaoControllerTest {
 
         when(precificacaoService.historico(eq(itemId), any()))
                 .thenReturn(new PageImpl<>(List.of(linhaSensivel, linhaNaoSensivel)));
-        when(tenantContext.possuiAutoridade("produtos.precificacao.ver_valores_sensiveis")).thenReturn(false);
+        when(tenantContext.possuiAutoridade("produtos.precificacao.ver")).thenReturn(false);
 
         PrecificacaoController controller = new PrecificacaoController(precificacaoService, tenantContext);
         ResponseEntity<ApiResponse<PaginaResposta<PrecificacaoHistoricoResponse>>> resposta =
@@ -161,7 +161,7 @@ class PrecificacaoControllerTest {
 
         when(precificacaoService.historico(eq(itemId), any()))
                 .thenReturn(new PageImpl<>(List.of(linhaDeTipo)));
-        when(tenantContext.possuiAutoridade("produtos.precificacao.ver_valores_sensiveis")).thenReturn(true);
+        when(tenantContext.possuiAutoridade("produtos.precificacao.ver")).thenReturn(true);
 
         PrecificacaoController controller = new PrecificacaoController(precificacaoService, tenantContext);
         ResponseEntity<ApiResponse<PaginaResposta<PrecificacaoHistoricoResponse>>> resposta =
