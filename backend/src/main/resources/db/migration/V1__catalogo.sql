@@ -1,4 +1,3 @@
-
 CREATE TABLE produtos.fabricantes (
     id uuid PRIMARY KEY,
     nome text NOT NULL CHECK (length(trim(nome)) > 0),
