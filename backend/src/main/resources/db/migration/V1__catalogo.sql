@@ -1,10 +1,3 @@
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'produtos') THEN
-        CREATE SCHEMA produtos;
-    END IF;
-END $$;
-
 CREATE TABLE produtos.fabricantes (
     id uuid PRIMARY KEY,
     nome text NOT NULL CHECK (length(trim(nome)) > 0),
