@@ -18,9 +18,10 @@ export function ProdutoPublico({ token }: { token: string }) {
     async function carregar() {
       try {
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) throw new Error("Link de produto inválido.");
-        const base = import.meta.env.VITE_API_URL ?? "";
-        // Consulta pública independente da sessão: não envia token de login nem solicita token local.
-        const res = await fetch(`${base}/api/produtos/publico/itens/${encodeURIComponent(token)}`, { signal: abort.signal, credentials: "omit", cache: "no-store" });
+        // Consulta pública pelo gateway, sem token de login.
+        const res = await fetch(
+          `/public/produtos/itens/${encodeURIComponent(token)}`,{signal: abort.signal,credentials: "omit",cache: "no-store",}
+        );
         if (res.status === 404) throw new Error("Este link foi desativado ou o produto não está disponível.");
         if (!res.ok) throw new Error("Não foi possível consultar o produto. Tente novamente mais tarde.");
         const json = await res.json();
