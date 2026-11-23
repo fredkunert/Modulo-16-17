@@ -11,6 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./backend/src/main/resources/db/migration/V1__catalogo.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U own_produtos -d integrador"]
       interval: 5s
